@@ -19,18 +19,18 @@ import styled from 'styled-components';
 import { generateDataAlbum } from './test';
 import { guid } from '../../../util/utils';
 
-class NarrativesDetailsTable extends React.Component {
+class AlbumsDetailsTable extends React.Component {
     onItemClick = e => {
         console.log('item click:', e.target.innerText);
         const uuid = e.target.innerText;
-        if (this.props.onNarrativeClicked) {
-            this.props.onNarrativeClicked(uuid);
+        if (this.props.onAlbumClicked) {
+            this.props.onAlbumClicked(uuid);
         }
     };
     render() {
         const columns = [
             {
-                title: 'UUID',
+                title: 'Album UUID',
                 dataIndex: 'UUID',
                 key: guid(),
                 align: 'center',
@@ -42,7 +42,7 @@ class NarrativesDetailsTable extends React.Component {
                             style={{
                                 color:
                                     template.UUID ===
-                                    this.props.selected_narrative_uuid
+                                    this.props.selected_album_uuid
                                         ? 'red'
                                         : 'black',
                                 cursor: 'pointer',
@@ -54,23 +54,42 @@ class NarrativesDetailsTable extends React.Component {
                 }),
             },
             {
-                title: 'Title',
-                dataIndex: 'title',
+                title: 'Album name',
+                dataIndex: 'album_name',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
                     props: { id: `tbl_album_name_${template.UUID}` },
-                    children: template.title,
+                    children: template.album_name,
                 }),
             },
             {
-                title: 'Owner',
-                dataIndex: 'owner',
+                title: 'Artist name',
+                dataIndex: 'artist_name',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_album_name_${template.UUID}` },
-                    children: template.username,
+                    props: { id: `tbl_artist_name_${template.UUID}` },
+                    children: template.artist_name,
+                }),
+            },
+            {
+                title: 'Vibbidi URL',
+                dataIndex: 'vibbidi_url',
+                key: guid(),
+                align: 'center',
+                render: (text, template) => ({
+                    props: { id: `tbl_vibbidi_url_${template.UUID}` },
+                    children: (
+                        <a
+                            href={
+                                'https://www.vibbidi.net' + template.vibbidi_url
+                            }
+                            target="_blank"
+                        >
+                            {template.vibbidi_url}
+                        </a>
+                    ),
                 }),
             },
         ];
@@ -79,11 +98,11 @@ class NarrativesDetailsTable extends React.Component {
             <Container>
                 <Table
                     columns={columns}
-                    dataSource={this.props.narratives.map(narrative => ({
-                        UUID: narrative.id,
-                        album_name: narrative.album_title,
-                        title: narrative.title,
-                        username: narrative.owner.username,
+                    dataSource={this.props.albums.map(album => ({
+                        UUID: album.id,
+                        album_name: album.album_name,
+                        artist_name: album.artist_name,
+                        vibbidi_url: album.web_url,
                     }))}
                     bordered
                     size="small"
@@ -108,4 +127,4 @@ const Container = styled.div`
         /* width: 100px !important; */
     }
 `;
-export default NarrativesDetailsTable;
+export default AlbumsDetailsTable;
