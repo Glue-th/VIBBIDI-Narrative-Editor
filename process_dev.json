@@ -1,0 +1,14 @@
+{
+    "apps": [
+        {
+            "name": "admin_dev",
+            "cwd": "./",
+            "script": "index.js",
+            "watch": false,
+            "env": {
+                "PORT": 3001,
+                "NODE_ENV": "dev"
+            }
+        }
+    ]
+}

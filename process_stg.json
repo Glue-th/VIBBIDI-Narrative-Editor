@@ -1,0 +1,14 @@
+{
+    "apps": [
+        {
+            "name": "admin_stg",
+            "cwd": "./",
+            "script": "index.js",
+            "watch": false,
+            "env": {
+                "PORT": 8001,
+                "NODE_ENV": "stg"
+            }
+        }
+    ]
+}
