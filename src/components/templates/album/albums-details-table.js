@@ -20,35 +20,35 @@ import { generateDataAlbum } from './test';
 import { guid } from '../../../util/utils';
 
 class AlbumsDetailsTable extends React.Component {
-    onItemClick = e => {
-        console.log('item click:', e.target.innerText);
-        const uuid = e.target.innerText;
+    onItemClick = album => () => {
+        // console.log('item click:', e.target.innerText);
+        // const uuid = e.target.innerText;
         if (this.props.onAlbumClicked) {
-            this.props.onAlbumClicked(uuid);
+            this.props.onAlbumClicked(album);
         }
     };
     render() {
         const columns = [
             {
                 title: 'Album UUID',
-                dataIndex: 'UUID',
+                dataIndex: 'id',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_id_${template.UUID}` },
+                    props: { id: `tbl_id_${template.id}` },
                     children: (
                         <span
-                            onClick={this.onItemClick}
+                            onClick={this.onItemClick(template)}
                             style={{
                                 color:
-                                    template.UUID ===
-                                    this.props.selected_album_uuid
+                                    template.id ===
+                                    (this.props.selected_album && this.props.selected_album.id)
                                         ? 'red'
                                         : 'black',
                                 cursor: 'pointer',
                             }}
                         >
-                            {template.UUID}
+                            {template.id}
                         </span>
                     ),
                 }),
@@ -59,7 +59,7 @@ class AlbumsDetailsTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_album_name_${template.UUID}` },
+                    props: { id: `tbl_album_name_${template.id}` },
                     children: template.album_name,
                 }),
             },
@@ -69,25 +69,20 @@ class AlbumsDetailsTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_artist_name_${template.UUID}` },
+                    props: { id: `tbl_artist_name_${template.id}` },
                     children: template.artist_name,
                 }),
             },
             {
                 title: 'Vibbidi URL',
-                dataIndex: 'vibbidi_url',
+                dataIndex: 'web_url',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_vibbidi_url_${template.UUID}` },
+                    props: { id: `tbl_web_url_${template.id}` },
                     children: (
-                        <a
-                            href={
-                                'https://www.vibbidi.net' + template.vibbidi_url
-                            }
-                            target="_blank"
-                        >
-                            {template.vibbidi_url}
+                        <a href={'https://www.vibbidi.net' + template.web_url} target="_blank">
+                            {template.web_url}
                         </a>
                     ),
                 }),
@@ -98,12 +93,7 @@ class AlbumsDetailsTable extends React.Component {
             <Container>
                 <Table
                     columns={columns}
-                    dataSource={this.props.albums.map(album => ({
-                        UUID: album.id,
-                        album_name: album.album_name,
-                        artist_name: album.artist_name,
-                        vibbidi_url: album.web_url,
-                    }))}
+                    dataSource={this.props.albums}
                     bordered
                     size="small"
                     id="tbl_narrative_template"
