@@ -6,7 +6,7 @@
             "script": "index.js",
             "watch": false,
             "env": {
-                "PORT": 5000,
+                "PORT": 8000,
                 "NODE_ENV": "production"
             }
         }
