@@ -5,7 +5,9 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
-import { Button, Card, Col, Form, Input, Row, Select } from 'antd';
+import {
+    Button, Card, Col, Form, Input, Row, Select
+} from 'antd';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
@@ -76,7 +78,7 @@ class NewNarratives extends React.Component {
                     '5F5D505C73B6467C995C517B3C4638EC', // album_id
                     '33554566518315', // user_id
                     'test-create', // title
-                    dummyJsonContent // content_json
+                    dummyJsonContent, // content_json
                 );
             }
         });
@@ -93,7 +95,7 @@ class NewNarratives extends React.Component {
                     '5F5D505C73B6467C995C517B3C4638EC', // album_id
                     '33554566518315', // user_id
                     'test-update', // title
-                    dummyJsonContent // content_json
+                    dummyJsonContent, // content_json
                 );
             }
         });
@@ -106,7 +108,7 @@ class NewNarratives extends React.Component {
                 <Title>Create Album Narratives</Title>
                 <div className="new-template">
                     {/* Search Album */}
-                    <SubTitle>1. Search Album</SubTitle>
+                    <SubTitle style={{ paddingTop: '2em' }}>1. Search Album</SubTitle>
                     <AlbumSearch searchCallback={this.onSearchAlbums} />
 
                     {/* Search result */}
@@ -115,9 +117,7 @@ class NewNarratives extends React.Component {
                         <Row gutter={16}>
                             <AlbumsDetailTable
                                 albums={this.state.albums}
-                                selected_album_uuid={
-                                    this.state.selected_album_uuid
-                                }
+                                selected_album_uuid={this.state.selected_album_uuid}
                                 onAlbumClicked={this.onAlbumClicked}
                             />
                         </Row>
@@ -125,14 +125,12 @@ class NewNarratives extends React.Component {
                         'no album'}
 
                     {/* Search Narratives */}
-                    <SubTitle>3. Select a Narrative</SubTitle>
+                    <SubTitle style={{ paddingTop: '2em' }}>3. Select a Narrative</SubTitle>
                     {(this.state.narratives && this.state.narratives.length && (
                         <Row gutter={16}>
                             <NarrativesDetailTable
                                 narratives={this.state.narratives}
-                                selected_narrative_uuid={
-                                    this.state.selected_narrative_uuid
-                                }
+                                selected_narrative_uuid={this.state.selected_narrative_uuid}
                                 onNarrativeClicked={this.onNarrativeClicked}
                             />
                         </Row>
@@ -140,13 +138,13 @@ class NewNarratives extends React.Component {
                         'no Narrative'}
 
                     {/* Form submit */}
-                    <SubTitle>
+                    <SubTitle style={{ paddingTop: '2em' }}>
                         4. Update or Create narrative for&nbsp;
                         {this.state.selected_album_uuid}
                     </SubTitle>
                     {(this.state.selected_album_uuid && (
                         <Form onSubmit={this.handleSave} layout="vertical">
-                            <Row gutter={16}>
+                            <Row gutter={16} style={{ paddingTop: '2em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                                     <span id="lblMAINTITTLE" className="label">
                                         MAIN TITTLE
@@ -157,8 +155,7 @@ class NewNarratives extends React.Component {
                                         {getFieldDecorator('main_title', {
                                             initialValue:
                                                 (this.state.narrative_detail &&
-                                                    this.state.narrative_detail
-                                                        .title) ||
+                                                    this.state.narrative_detail.title) ||
                                                 '',
                                             rules: [
                                                 {
@@ -172,7 +169,7 @@ class NewNarratives extends React.Component {
                                                 id="input_main_title"
                                                 placeholder="title of narrative"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -183,13 +180,7 @@ class NewNarratives extends React.Component {
                                         <Col xs={8} />
 
                                         <Col xs={8}>
-                                            <FormItem
-                                                label={
-                                                    <span id="'URLembed">
-                                                        URLembed
-                                                    </span>
-                                                }
-                                            >
+                                            <FormItem label={<span id="'URLembed">URLembed</span>}>
                                                 {getFieldDecorator('reason')(
                                                     <Select
                                                         allowClear
@@ -204,7 +195,7 @@ class NewNarratives extends React.Component {
                                                         <SelectOption value={2}>
                                                             The game - Single
                                                         </SelectOption>
-                                                    </Select>
+                                                    </Select>,
                                                 )}
                                             </FormItem>
                                         </Col>
@@ -212,12 +203,9 @@ class NewNarratives extends React.Component {
                                     </Row>
                                 </Card>
                             </Row>
-                            <Row gutter={16}>
+                            <Row gutter={16} style={{ paddingTop: '2em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblSub-tittle-1"
-                                        className="label"
-                                    >
+                                    <span id="lblSub-tittle-1" className="label">
                                         Sub-tittle 1
                                     </span>
                                 </Col>
@@ -236,7 +224,7 @@ class NewNarratives extends React.Component {
                                                 id="input_sub-tittle-1"
                                                 placeholder="Sub-tittle"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -254,15 +242,12 @@ class NewNarratives extends React.Component {
                                                 id="input_video_url_1"
                                                 placeholder=" Video URL"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblDatasourceID_1"
-                                        className="label"
-                                    >
+                                    <span id="lblDatasourceID_1" className="label">
                                         Datasource ID
                                     </span>
                                 </Col>
@@ -273,7 +258,7 @@ class NewNarratives extends React.Component {
                                                 id="input_datasourceID_1"
                                                 placeholder="Datasource ID"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -281,12 +266,9 @@ class NewNarratives extends React.Component {
                             <Row gutter={16}>
                                 <Card />
                             </Row>
-                            <Row gutter={16}>
+                            <Row gutter={16} style={{ paddingTop: '2em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblSub-tittle-2"
-                                        className="label"
-                                    >
+                                    <span id="lblSub-tittle-2" className="label">
                                         Sub-tittle 2
                                     </span>
                                 </Col>
@@ -305,7 +287,7 @@ class NewNarratives extends React.Component {
                                                 id="input_sub-tittle-2"
                                                 placeholder="Sub-tittle"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -323,15 +305,12 @@ class NewNarratives extends React.Component {
                                                 id="input_video_url_2"
                                                 placeholder=" Video URL"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblDatasourceID_2"
-                                        className="label"
-                                    >
+                                    <span id="lblDatasourceID_2" className="label">
                                         Datasource ID
                                     </span>
                                 </Col>
@@ -342,7 +321,7 @@ class NewNarratives extends React.Component {
                                                 id="input_datasourceID_2"
                                                 placeholder="Datasource ID"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -350,12 +329,9 @@ class NewNarratives extends React.Component {
                             <Row gutter={16}>
                                 <Card />
                             </Row>
-                            <Row gutter={16}>
+                            <Row gutter={16} style={{ paddingTop: '2em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblSub-tittle-3"
-                                        className="label"
-                                    >
+                                    <span id="lblSub-tittle-3" className="label">
                                         Sub-tittle 3
                                     </span>
                                 </Col>
@@ -374,7 +350,7 @@ class NewNarratives extends React.Component {
                                                 id="input_sub-tittle-3"
                                                 placeholder="Sub-tittle"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -392,15 +368,12 @@ class NewNarratives extends React.Component {
                                                 id="input_video_url_3"
                                                 placeholder=" Video URL"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblDatasourceID_3"
-                                        className="label"
-                                    >
+                                    <span id="lblDatasourceID_3" className="label">
                                         Datasource ID
                                     </span>
                                 </Col>
@@ -411,7 +384,7 @@ class NewNarratives extends React.Component {
                                                 id="input_datasourceID_3"
                                                 placeholder="Datasource ID"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -419,10 +392,8 @@ class NewNarratives extends React.Component {
                             <Row gutter={16}>
                                 <Card />
                             </Row>
-                            <Col xs={24}>
-                                <FormItem
-                                    label={<span id="hashtags">Hashtags</span>}
-                                >
+                            <Col xs={24} style={{ paddingTop: '2em' }}>
+                                <FormItem label={<span id="hashtags">Hashtags</span>}>
                                     {getFieldDecorator('hashtags')(
                                         <TextArea
                                             placeholder="#TaylorSwift #Pop #Reputation #Endgame"
@@ -430,24 +401,17 @@ class NewNarratives extends React.Component {
                                                 minRows: 4,
                                                 maxRows: 6,
                                             }}
-                                        />
+                                        />,
                                     )}
                                 </FormItem>
                             </Col>
                             <Row>
                                 <Col span={24} style={{ textAlign: 'right' }}>
                                     <Button id="btnCancel">Cancel</Button>
-                                    <Button
-                                        id="btnSave"
-                                        onClick={this.handleSave}
-                                    >
+                                    <Button id="btnSave" onClick={this.handleSave}>
                                         Save
                                     </Button>
-                                    <Button
-                                        type="primary"
-                                        htmlType="submit"
-                                        id="btnSubmit"
-                                    >
+                                    <Button type="primary" htmlType="submit" id="btnSubmit">
                                         Create
                                     </Button>
                                 </Col>
