@@ -43,7 +43,7 @@ class Routes extends React.Component {
                 <ThemeProvider theme={theme}>
                     <React.Fragment>
                         <GlobalStyle />
-                        <Layout style={{ minHeight: '100vh' }}>
+                        <Layout style={{ height: '100vh' }}>
                             <SiderMenu
                                 logo={logo}
                                 menuData={MenuData}
@@ -84,9 +84,9 @@ class Routes extends React.Component {
                                         </Switch>
                                     </div>
                                 </Content>
-                                <Footer style={{ textAlign: 'center' }}>
+                                {/* <Footer style={{ textAlign: 'center' }}>
                                     Ant Design ©2018 Created by Ant UED
-                                </Footer>
+                                </Footer> */}
                             </Layout>
                         </Layout>
                     </React.Fragment>

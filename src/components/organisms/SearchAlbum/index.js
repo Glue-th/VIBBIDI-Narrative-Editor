@@ -1,4 +1,6 @@
-import { Button, Card, Col, Form, Input, Row, Select } from 'antd';
+import {
+    Button, Card, Col, Form, Input, Row, Select,
+} from 'antd';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
@@ -26,7 +28,7 @@ class AlbumSearch extends React.Component {
                 const { album_name, artist_name } = values;
                 searchAlbums(album_name, artist_name)
                     .then(res => res.data.albums)
-                    .then(albums => {
+                    .then((albums) => {
                         console.log(albums);
                         if (this.props.searchCallback) {
                             this.props.searchCallback(albums);
@@ -53,8 +55,7 @@ class AlbumSearch extends React.Component {
                                 rules: [
                                     {
                                         max: 256,
-                                        message:
-                                            'Please input less than 256 character!',
+                                        message: 'Please input less than 256 character!',
                                     },
                                 ],
                             })(
@@ -62,7 +63,7 @@ class AlbumSearch extends React.Component {
                                     id="input_album_name"
                                     placeholder="Album Name"
                                     style={{ width: '100%' }}
-                                />
+                                />,
                             )}
                         </FormItem>
                     </Col>
@@ -77,8 +78,7 @@ class AlbumSearch extends React.Component {
                                 rules: [
                                     {
                                         max: 256,
-                                        message:
-                                            'Please input less than 256 character!',
+                                        message: 'Please input less than 256 character!',
                                     },
                                 ],
                             })(
@@ -86,23 +86,12 @@ class AlbumSearch extends React.Component {
                                     id="input_artist_name"
                                     placeholder="Artist Name"
                                     style={{ width: '100%' }}
-                                />
+                                />,
                             )}
                         </FormItem>
                     </Col>
-                    <Col
-                        xs={3}
-                        sm={3}
-                        md={3}
-                        lg={3}
-                        xl={3}
-                        style={{ textAlign: 'right' }}
-                    >
-                        <Button
-                            type="primary"
-                            htmlType="submit"
-                            id="btnSearch-report"
-                        >
+                    <Col xs={3} sm={3} md={3} lg={3} xl={3} style={{ textAlign: 'right' }}>
+                        <Button type="primary" htmlType="submit" id="btnSearch-report">
                             Search
                         </Button>
                     </Col>
