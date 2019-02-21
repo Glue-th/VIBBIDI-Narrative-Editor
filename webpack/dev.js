@@ -11,6 +11,6 @@ export default {
 
     devServer: {
         hot: true,
-        port: '8000',
+        port: '5000',
     },
 };
