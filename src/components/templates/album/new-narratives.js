@@ -5,7 +5,9 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
-import { Button, Card, Col, Form, Input, Row } from 'antd';
+import {
+    Button, Card, Col, Form, Input, Row
+} from 'antd';
 import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 // import draftToMarkdown from 'draftjs-to-markdown';
 import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
@@ -14,7 +16,13 @@ import 'medium-draft/lib/index.css';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
-import { createNarrative, getAlbumNarratives, getNarrativeDetail, setNarrativeTags, updateNarrative } from '../../../api/index';
+import {
+    createNarrative,
+    getAlbumNarratives,
+    getNarrativeDetail,
+    setNarrativeTags,
+    updateNarrative,
+} from '../../../api/index';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
 import AlbumsDetailTable from './albums-details-table';
 import KeywordTable from './keyword-table';
@@ -93,12 +101,14 @@ class NewNarratives extends React.Component {
                         const rawData = mdToDraftjs(
                             narrativeDetail.content_json.sections[i].content,
                         );
-                        const nodes = narrativeDetail.content_json.sections[i].content.split(
-                            '\r\n',
-                        );
+                        const nodes = narrativeDetail.content_json.sections[i].content
+                            .split('[')
+                            .slice(1);
                         const content = [];
                         nodes.forEach(node => {
                             // Link (Text + URL)
+                            node = `[${node}`;
+                            console.log(node);
                             if (node.indexOf('[') === 0) {
                                 const matches = node.match(/\[(.*)\]\((.*)\)/);
                                 content.push({
@@ -108,6 +118,11 @@ class NewNarratives extends React.Component {
                             }
                         });
                         keywords = keywords.concat(content);
+                        console.log(
+                            content,
+                            keywords,
+                            narrativeDetail.content_json.sections[i].content,
+                        );
                         const contentState = convertFromRaw(rawData);
                         const newEditorState = EditorState.createWithContent(contentState);
                         editorState[`section${i}`] = newEditorState;
@@ -596,7 +611,7 @@ class NewNarratives extends React.Component {
                                 </Col>
                             </Row>
                             <Row>
-                                <Col span={24} style={{ textAlign: 'right' }}>
+                                <Col span={24} style={{ textAlign: 'right', paddingTop: '1em' }}>
                                     <Button id="btnCancel" onClick={this.handleCancel}>
                                         Cancel
                                     </Button>
