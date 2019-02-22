@@ -1,7 +1,7 @@
 {
     "apps": [
         {
-            "name": "admin_prod",
+            "name": "admin-screen.vibbidi.net",
             "cwd": "./",
             "script": "index.js",
             "watch": false,
