@@ -8,8 +8,9 @@
 import {
     Button, Card, Col, Form, Input, Row
 } from 'antd';
-import { convertToRaw } from 'draft-js';
-import draftToMarkdown from 'draftjs-to-markdown';
+import { convertToRaw, convertFromRaw, EditorState, ContentState } from 'draft-js';
+// import draftToMarkdown from 'draftjs-to-markdown';
+import { mdToDraftjs, draftjsToMd } from 'draftjs-md-converter';
 import { createEditorState, Editor } from 'medium-draft';
 import 'medium-draft/lib/index.css';
 import PropTypes from 'prop-types';
@@ -55,7 +56,7 @@ class NewNarratives extends React.Component {
             const { editorState, narrativeDetail, contents } = this.state;
             editorState[`section${index}`] = editor;
             const rawContentState = convertToRaw(editor.getCurrentContent());
-            const markup = draftToMarkdown(rawContentState);
+            const markup = draftjsToMd(rawContentState);
             if (narrativeDetail) {
                 narrativeDetail.content_json.sections[index].content = markup;
             } else {
@@ -68,6 +69,7 @@ class NewNarratives extends React.Component {
     }
 
     onAlbumClicked = album => {
+        this.handleCancel();
         this.setState({ selectedAlbum: album, narratives: [] });
         getAlbumNarratives(album.id)
             .then(res => res.data.narratives)
@@ -93,9 +95,12 @@ class NewNarratives extends React.Component {
                     narrativeDetail.content_json.sections
                 ) {
                     for (let i = 0; i < narrativeDetail.content_json.sections.length; i += 1) {
-                        editorState[`section${i}`] = createEditorState(
+                        const rawData = mdToDraftjs(
                             narrativeDetail.content_json.sections[i].content,
                         );
+                        const contentState = convertFromRaw(rawData);
+                        const newEditorState = EditorState.createWithContent(contentState);
+                        editorState[`section${i}`] = newEditorState;
                     }
                 }
                 let hashTag = '';
