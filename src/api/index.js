@@ -31,13 +31,7 @@ export function createNarrative(albumId, userId, title, contentJson) {
 }
 
 /** overide all fields. Carefully */
-export function updateNarrative(
-    narrativeId,
-    albumId,
-    userId,
-    title,
-    contentJson
-) {
+export function updateNarrative(narrativeId, albumId, userId, title, contentJson) {
     return axios.post(`${API_HOST}/api/v6/narratives`, {
         narrative_id: narrativeId,
         album_id: albumId,
@@ -48,7 +42,7 @@ export function updateNarrative(
 }
 
 export function setNarrativeTags(narrativeId, tags) {
-    return axios.post(`${API_HOST}/api/v6/narratives/tags/`, {
+    return axios.post(`${API_HOST}/api/v6/narratives/tags`, {
         narrative_id: narrativeId, // D746DF53D6D0493599059418600923E7
         tags: tags, // ["tag1","tag2","tag3"]
     });

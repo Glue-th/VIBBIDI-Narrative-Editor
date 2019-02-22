@@ -19,6 +19,7 @@ import {
     createNarrative,
     getAlbumNarratives,
     getNarrativeDetail,
+    setNarrativeTags,
     updateNarrative,
 } from '../../../api/index';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
@@ -31,12 +32,6 @@ const toolbarConfig = {
     block: [],
     inline: ['BOLD', 'ITALIC', 'UNDERLINE', 'hyperlink'],
 };
-const initEditor = {
-    section0: createEditorState(),
-    section1: createEditorState(),
-    section2: createEditorState(),
-    section3: createEditorState(),
-};
 class NewNarratives extends React.Component {
     constructor(props) {
         super(props);
@@ -47,7 +42,12 @@ class NewNarratives extends React.Component {
             narratives: [],
             narrativeDetail: null,
             numberSubSection: 3,
-            editorState: initEditor,
+            editorState: {
+                section0: createEditorState(),
+                section1: createEditorState(),
+                section2: createEditorState(),
+                section3: createEditorState(),
+            },
             hashTag: '',
             contents: [],
         };
@@ -66,19 +66,6 @@ class NewNarratives extends React.Component {
 
         this.refsEditor = React.createRef();
     }
-
-    // onChangeEditor = () => index => editor => {
-    //     const { editorState, narrativeDetail, contents } = this.state;
-    //     editorState[`section${index}`] = editor;
-    //     const rawContentState = convertToRaw(editor.getCurrentContent());
-    //     const markup = draftToMarkdown(rawContentState);
-    //     if (narrativeDetail) {
-    //         narrativeDetail.content_json.sections[index].content = markup;
-    //     } else {
-    //         contents[index] = markup;
-    //     }
-    //     this.setState({ editorState, narrativeDetail, contents });
-    // };
 
     onAlbumClicked = album => {
         this.setState({ selected_album: album, narratives: [] });
@@ -147,12 +134,19 @@ class NewNarratives extends React.Component {
                         };
                         sections.push(section);
                     }
+                    const hashtag = values.hashTags
+                        .split('#')
+                        .map(item => item.trim())
+                        .slice(1);
                     createNarrative(
                         selected_album.id, // album_id
                         values.author || '297513575490577', // user_id
                         values.main_title, // title
                         { sections }, // content_json
-                    );
+                    )
+                        .then(res => res.data.narrative.id)
+                        .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
+                        .catch(err => console.log('update fail', err.message));
                 }
             });
         }
@@ -161,18 +155,24 @@ class NewNarratives extends React.Component {
     handleSave = e => {
         e.preventDefault();
         console.log('update');
-        const { narrativeUuid, selected_album, narrativeDetail } = this.state;
+        const { selected_narrative_uuid, selected_album, narrativeDetail } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 console.log('Received values of form: ', values);
-                if (narrativeDetail && narrativeDetail.content_json) {
+                const hashtag = values.hashTags
+                    .split('#')
+                    .map(item => item.trim())
+                    .slice(1);
+                if (selected_narrative_uuid && narrativeDetail && narrativeDetail.content_json) {
                     updateNarrative(
-                        narrativeUuid, // narrative_id
+                        selected_narrative_uuid, // narrative_id
                         selected_album.id, // album_id
                         values.author || '297513575490577', // user_id
                         values.main_title, // title
                         narrativeDetail.content_json, // content_json
-                    );
+                    )
+                        .then(setNarrativeTags(selected_narrative_uuid, hashtag))
+                        .catch(err => console.log('update fail', err.message));
                 }
             }
         });
@@ -184,7 +184,12 @@ class NewNarratives extends React.Component {
             narrativeDetail: null,
             selected_narrative_uuid: null,
             numberSubSection: 3,
-            editorState: initEditor,
+            editorState: {
+                section0: createEditorState(),
+                section1: createEditorState(),
+                section2: createEditorState(),
+                section3: createEditorState(),
+            },
             hashTag: '',
         });
         this.props.form.resetFields();
@@ -546,12 +551,20 @@ class NewNarratives extends React.Component {
                                     <Button id="btnCancel" onClick={this.handleCancel}>
                                         Cancel
                                     </Button>
-                                    <Button id="btnSave" onClick={this.handleSave}>
-                                        Save
-                                    </Button>
-                                    <Button type="primary" htmlType="submit" id="btnSubmit">
-                                        Finish
-                                    </Button>
+                                    {narrativeDetail && (
+                                        <Button
+                                            type="danger"
+                                            id="btnSave"
+                                            onClick={this.handleSave}
+                                        >
+                                            Save
+                                        </Button>
+                                    )}
+                                    {!narrativeDetail && (
+                                        <Button type="primary" htmlType="submit" id="btnSubmit">
+                                            Finish
+                                        </Button>
+                                    )}
                                 </Col>
                             </Row>
                         </Form>
