@@ -5,26 +5,19 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
-import {
-    Button, Card, Col, Form, Input, Row
-} from 'antd';
-import { convertToRaw, convertFromRaw, EditorState } from 'draft-js';
+import { Button, Card, Col, Form, Input, Row } from 'antd';
+import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 // import draftToMarkdown from 'draftjs-to-markdown';
-import { mdToDraftjs, draftjsToMd } from 'draftjs-md-converter';
+import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
 import { createEditorState, Editor } from 'medium-draft';
 import 'medium-draft/lib/index.css';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
-import {
-    createNarrative,
-    getAlbumNarratives,
-    getNarrativeDetail,
-    setNarrativeTags,
-    updateNarrative,
-} from '../../../api/index';
+import { createNarrative, getAlbumNarratives, getNarrativeDetail, setNarrativeTags, updateNarrative } from '../../../api/index';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
 import AlbumsDetailTable from './albums-details-table';
+import KeywordTable from './keyword-table';
 import NarrativesDetailTable from './narratives-details-table';
 
 const FormItem = Form.Item;
@@ -51,6 +44,7 @@ class NewNarratives extends React.Component {
             },
             hashTag: '',
             contents: [],
+            keywords: [],
         };
         this.onChangeEditor = index => editor => {
             const { editorState, narrativeDetail, contents } = this.state;
@@ -86,6 +80,7 @@ class NewNarratives extends React.Component {
         }
         const { editorState } = this.state;
         this.setState({ selectedNarrativeUuid: narrativeUuid });
+        let keywords = [];
         getNarrativeDetail(narrativeUuid)
             .then(res => res.data)
             .then(narrativeDetail => {
@@ -98,6 +93,21 @@ class NewNarratives extends React.Component {
                         const rawData = mdToDraftjs(
                             narrativeDetail.content_json.sections[i].content,
                         );
+                        const nodes = narrativeDetail.content_json.sections[i].content.split(
+                            '\r\n',
+                        );
+                        const content = [];
+                        nodes.forEach(node => {
+                            // Link (Text + URL)
+                            if (node.indexOf('[') === 0) {
+                                const matches = node.match(/\[(.*)\]\((.*)\)/);
+                                content.push({
+                                    text: matches[1],
+                                    url: matches[2],
+                                });
+                            }
+                        });
+                        keywords = keywords.concat(content);
                         const contentState = convertFromRaw(rawData);
                         const newEditorState = EditorState.createWithContent(contentState);
                         editorState[`section${i}`] = newEditorState;
@@ -113,6 +123,7 @@ class NewNarratives extends React.Component {
                     narrativeDetail,
                     editorState,
                     hashTag,
+                    keywords,
                 });
             })
             .catch(e => console.log(e.message));
@@ -233,7 +244,7 @@ class NewNarratives extends React.Component {
     render() {
         const { getFieldDecorator } = this.props.form;
         const {
-            narrativeDetail, numberSubSection, editorState, hashTag
+            narrativeDetail, numberSubSection, editorState, hashTag, keywords
         } = this.state;
         let start = 1;
         if (
@@ -574,6 +585,13 @@ class NewNarratives extends React.Component {
                                                 />,
                                             )}
                                         </FormItem>
+                                    </Card>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={24}>
+                                    <Card title="keyword" bordered={false}>
+                                        <KeywordTable keywords={keywords} />
                                     </Card>
                                 </Col>
                             </Row>
