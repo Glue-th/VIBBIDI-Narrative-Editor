@@ -19,6 +19,7 @@ import styled from 'styled-components';
 import {
     createNarrative,
     getAlbumNarratives,
+    getDatasourceByYoutubeUrl,
     getNarrativeDetail,
     setNarrativeTags,
     updateNarrative,
@@ -70,6 +71,19 @@ class NewNarratives extends React.Component {
         this.refsEditor = React.createRef();
     }
 
+    componentDidMount = () => {
+        // getDatasourceByYoutubeUrl('https://www.youtube.com/watch?v=nfWlot6h_JM')
+        //     .then(res => res.data.data.findByYoutubeUrl)
+        //     .then(track => {
+        //         console.log(
+        //             'https://www.youtube.com/watch?v=nfWlot6h_JM',
+        //             '==>',
+        //             track.datasourceId,
+        //         );
+        //     })
+        //     .catch(e => console.log(e.message));
+    };
+
     onAlbumClicked = album => {
         this.handleCancel();
         this.setState({ selectedAlbum: album, narratives: [] });
@@ -108,7 +122,6 @@ class NewNarratives extends React.Component {
                         nodes.forEach(node => {
                             // Link (Text + URL)
                             node = `[${node}`;
-                            console.log(node);
                             if (node.indexOf('[') === 0) {
                                 const matches = node.match(/\[(.*)\]\((.*)\)/);
                                 content.push({
@@ -118,11 +131,7 @@ class NewNarratives extends React.Component {
                             }
                         });
                         keywords = keywords.concat(content);
-                        console.log(
-                            content,
-                            keywords,
-                            narrativeDetail.content_json.sections[i].content,
-                        );
+
                         const contentState = convertFromRaw(rawData);
                         const newEditorState = EditorState.createWithContent(contentState);
                         editorState[`section${i}`] = newEditorState;
@@ -248,12 +257,35 @@ class NewNarratives extends React.Component {
                 section3: createEditorState(),
             },
             hashTag: '',
+            keywords: [],
         });
         this.props.form.resetFields();
     };
 
     addSection = () => {
-        this.setState(prevState => ({ numberSubSection: prevState.numberSubSection + 1 }));
+        this.setState(prevState => ({
+            numberSubSection: prevState.numberSubSection + 1,
+        }));
+    };
+
+    handleFindDataSource = (fieldLink, fieldDatasource) => () => {
+        const link = this.props.form.getFieldValue(fieldLink);
+        if (link) {
+            getDatasourceByYoutubeUrl(link)
+                .then(res => res.data.data.findByYoutubeUrl)
+                .then(track => {
+                    console.log(track.datasourceId);
+                    this.props.form.setFieldsValue({
+                        [fieldDatasource]: track.datasourceId,
+                    });
+                })
+                .catch(e => {
+                    console.log(e.message);
+                    this.props.form.setFieldsValue({
+                        [fieldDatasource]: null,
+                    });
+                });
+        }
     };
 
     render() {
@@ -297,7 +329,7 @@ class NewNarratives extends React.Component {
                                 Video URL
                             </span>
                         </Col>
-                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                        <Col xs={7} sm={7} md={7} lg={7} xl={7}>
                             <FormItem>
                                 {getFieldDecorator(`video_url_new_${index}`)(
                                     <Input
@@ -307,6 +339,18 @@ class NewNarratives extends React.Component {
                                     />,
                                 )}
                             </FormItem>
+                        </Col>
+                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
+                            <Button
+                                type="danger"
+                                id={`lblDatasourceID_${index}`}
+                                onClick={this.handleFindDataSource(
+                                    `video_url_new_${index}`,
+                                    `datasourceID_new_${index}`,
+                                )}
+                            >
+                                Find
+                            </Button>
                         </Col>
                         <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                             <span id={`lblDatasourceID_${index}`} className="label">
@@ -458,7 +502,12 @@ class NewNarratives extends React.Component {
                                         if (index > 0) {
                                             return (
                                                 <div key={index}>
-                                                    <Row gutter={16} style={{ paddingTop: '1em' }}>
+                                                    <Row
+                                                        gutter={16}
+                                                        style={{
+                                                            paddingTop: '1em',
+                                                        }}
+                                                    >
                                                         <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                                                             <span
                                                                 id={`lblSub-tittle-${index}`}
@@ -485,7 +534,9 @@ class NewNarratives extends React.Component {
                                                                     <Input
                                                                         id={`input_sub-tittle-${index}`}
                                                                         placeholder="Sub-tittle"
-                                                                        style={{ width: '100%' }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
                                                                     />,
                                                                 )}
                                                             </FormItem>
@@ -514,12 +565,26 @@ class NewNarratives extends React.Component {
                                                                         id={`input_video_url_${index +
                                                                             1}`}
                                                                         placeholder=" Video URL"
-                                                                        style={{ width: '100%' }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
                                                                     />,
                                                                 )}
                                                             </FormItem>
                                                         </Col>
-                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
+                                                            <Button
+                                                                type="danger"
+                                                                id={`lblDatasourceID_${index}`}
+                                                                onClick={this.handleFindDataSource(
+                                                                    `video_url_${index}`,
+                                                                    `datasourceID_${index}`,
+                                                                )}
+                                                            >
+                                                                Find
+                                                            </Button>
+                                                        </Col>
+                                                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
                                                             <span
                                                                 id={`lblDatasourceID_${index}`}
                                                                 className="label"
@@ -540,7 +605,9 @@ class NewNarratives extends React.Component {
                                                                     <Input
                                                                         id={`input_datasourceID_${index}`}
                                                                         placeholder="Datasource ID"
-                                                                        style={{ width: '100%' }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
                                                                     />,
                                                                 )}
                                                             </FormItem>

@@ -3,6 +3,7 @@
 import axios from 'axios';
 
 const API_HOST = 'https://api.vibbidi.net';
+const GQL_HOST = 'https://api.vibbidi.net/api/v6/graphql';
 
 export function searchAlbums(albumTitle, artistName) {
     return axios.get(`${API_HOST}/api/v6/narratives`, {
@@ -31,7 +32,13 @@ export function createNarrative(albumId, userId, title, contentJson) {
 }
 
 /** overide all fields. Carefully */
-export function updateNarrative(narrativeId, albumId, userId, title, contentJson) {
+export function updateNarrative(
+    narrativeId,
+    albumId,
+    userId,
+    title,
+    contentJson
+) {
     return axios.post(`${API_HOST}/api/v6/narratives`, {
         narrative_id: narrativeId,
         album_id: albumId,
@@ -54,4 +61,49 @@ export function getNarrativeTags(narrativeId) {
 
 export function getNarrativeByUserId(userId) {
     return axios.get(`${API_HOST}/api/v6/narratives/user/${userId}`);
+}
+
+/**
+ * @param {String} youtubeUrl eg: https://www.youtube.com/watch?v=nfWlot6h_JM or https://youtu.be/nfWlot6h_JM
+ */
+export function getDatasourceByYoutubeUrl(youtubeUrl) {
+    const query = `
+    query findDatasourceByYoutubeUrl($youtubeUrl: String!){
+        findByYoutubeUrl(youtubeUrl: $youtubeUrl) {
+          id
+          title
+          durationMs
+          coverImage {
+            url
+            width
+            height
+            mimeType
+          }
+          datasourceId
+          previewUrl
+          playerAudioVolume
+          url
+          width
+          height
+          isVideo
+          displayAt
+          artistName
+          webUri
+        }
+      }
+    `;
+    return axios.post(
+        GQL_HOST,
+        {
+            query: query,
+            variables: {
+                youtubeUrl: youtubeUrl,
+            },
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }
+    );
 }
