@@ -14,7 +14,7 @@ class SeoTable extends React.Component {
                 fixed: 'left',
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_UUID_${template.id}` },
+                    props: { id: `tbl_UUID_${template.UUID}` },
                     children: template.UUID,
                 }),
             },
@@ -24,7 +24,7 @@ class SeoTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_keyword_${template.id}` },
+                    props: { id: `tbl_keyword_${template.UUID}` },
                     children: template.keyword,
                 }),
             },
@@ -34,7 +34,7 @@ class SeoTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_attached_URL_${template.id}` },
+                    props: { id: `tbl_attached_URL_${template.UUID}` },
                     children: template.attached_URL,
                 }),
             },
@@ -44,7 +44,7 @@ class SeoTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_content_${template.id}` },
+                    props: { id: `tbl_content_${template.UUID}` },
                     children: template.content,
                 }),
             },
@@ -54,7 +54,7 @@ class SeoTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_hashtag_${template.id}` },
+                    props: { id: `tbl_hashtag_${template.UUID}` },
                     children: template.hashtag,
                 }),
             },
@@ -65,10 +65,10 @@ class SeoTable extends React.Component {
                 fixed: 'right',
                 align: 'center',
                 render: (text, template) => (
-                    <div id={`tbl_detail_${template.id}`}>
-                        <Icon id={`tbl_detail_${template.id}`} type="eye" />
-                        <Icon id={`tbl_edit_${template.id}`} type="edit" theme="filled" />
-                        <Icon id={`tbl_plus_${template.id}`} type="plus" />
+                    <div id={`tbl_detail_${template.UUID}`}>
+                        <Icon id={`tbl_detail_${template.UUID}`} type="eye" />
+                        <Icon id={`tbl_edit_${template.UUID}`} type="edit" theme="filled" />
+                        <Icon id={`tbl_plus_${template.UUID}`} type="plus" />
                     </div>
                 ),
             },
@@ -97,8 +97,8 @@ const Container = styled.div`
         padding: 5px;
     }
     table {
-        display: block;
-        width: 100px !important;
+        /* display: block; */
+        /* width: 100px !important; */
     }
 `;
 export default SeoTable;

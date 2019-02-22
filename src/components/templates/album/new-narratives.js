@@ -5,23 +5,24 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
-import { Button, Card, Col, Form, Input, Row, Select } from 'antd';
+import {
+    Button, Card, Col, Form, Input, Row
+} from 'antd';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
-import AlbumsDetailTable from './albums-details-table';
-import NarrativesDetailTable from './narratives-details-table';
-import AlbumSearch from '../../organisms/SearchAlbum/index';
 import {
+    createNarrative,
     getAlbumNarratives,
     getNarrativeDetail,
-    createNarrative,
     updateNarrative,
 } from '../../../api/index';
+import AlbumSearch from '../../organisms/SearchAlbum/index';
+import AlbumsDetailTable from './albums-details-table';
+import NarrativesDetailTable from './narratives-details-table';
 import { dummyJsonContent } from './test';
 
 const FormItem = Form.Item;
-const SelectOption = Select.Option;
 const { TextArea } = Input;
 
 class NewNarratives extends React.Component {
@@ -29,16 +30,18 @@ class NewNarratives extends React.Component {
         super(props);
         this.state = {
             albums: [],
-            selected_album_uuid: null,
+            selected_album: null,
             selected_narrative_uuid: null,
             narratives: [],
-            narrative_detail: null,
+            narrativeDetail: null,
+            numberSubSection: 0,
         };
     }
 
-    onAlbumClicked = albumUuid => {
-        this.setState({ selected_album_uuid: albumUuid, narratives: [] });
-        getAlbumNarratives(albumUuid)
+    onAlbumClicked = album => {
+        this.setState({ selected_album: album, narratives: [] });
+        console.log(album);
+        getAlbumNarratives(album.id)
             .then(res => res.data.narratives)
             .then(narratives => {
                 console.log('narratives', narratives);
@@ -57,7 +60,7 @@ class NewNarratives extends React.Component {
             .then(res => res.data)
             .then(narrative => {
                 console.log('narrative', narrative);
-                this.setState({ narrative_detail: narrative });
+                this.setState({ narrativeDetail: narrative });
             })
             .catch(e => console.log(e.message));
     };
@@ -76,7 +79,7 @@ class NewNarratives extends React.Component {
                     '5F5D505C73B6467C995C517B3C4638EC', // album_id
                     '33554566518315', // user_id
                     'test-create', // title
-                    dummyJsonContent // content_json
+                    dummyJsonContent, // content_json
                 );
             }
         });
@@ -93,31 +96,119 @@ class NewNarratives extends React.Component {
                     '5F5D505C73B6467C995C517B3C4638EC', // album_id
                     '33554566518315', // user_id
                     'test-update', // title
-                    dummyJsonContent // content_json
+                    dummyJsonContent, // content_json
                 );
             }
         });
     };
 
+    addSubtitle = () => {
+        this.setState(prevState => ({ numberSubSection: prevState.numberSubSection + 1 }));
+    };
+
     render() {
         const { getFieldDecorator } = this.props.form;
+        const { narrativeDetail, numberSubSection } = this.state;
+        let start = 0;
+        if (
+            narrativeDetail &&
+            narrativeDetail.content_json &&
+            narrativeDetail.content_json.sections
+        ) {
+            start = narrativeDetail.content_json.sections.length;
+        }
+        const subSections = [];
+        for (let index = start; index < numberSubSection + start; index += 1) {
+            subSections.push(
+                <div>
+                    <Row gutter={16} style={{ paddingTop: '1em' }}>
+                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                            <span id={`lblSub-tittle-${index + 1}`} className="label">
+                                {`Sub-tittle ${index + 1}`}
+                            </span>
+                        </Col>
+                        <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                            <FormItem>
+                                {getFieldDecorator(`sub-tittle-${index + 1}`)(
+                                    <Input
+                                        id={`input_sub-tittle-${index + 1}`}
+                                        placeholder="Sub-tittle"
+                                        style={{ width: '100%' }}
+                                    />,
+                                )}
+                            </FormItem>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                            <span id={`lblVideoURL_${index + 1}`} className="label">
+                                Video URL
+                            </span>
+                        </Col>
+                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                            <FormItem>
+                                {getFieldDecorator(`video_url_${index + 1}`)(
+                                    <Input
+                                        id={`input_video_url_${index + 1}`}
+                                        placeholder=" Video URL"
+                                        style={{ width: '100%' }}
+                                    />,
+                                )}
+                            </FormItem>
+                        </Col>
+                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                            <span id={`lblDatasourceID_${index + 1}`} className="label">
+                                Datasource ID
+                            </span>
+                        </Col>
+                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                            <FormItem>
+                                {getFieldDecorator(`datasourceID_${index + 1}`)(
+                                    <Input
+                                        id={`input_datasourceID_${index + 1}`}
+                                        placeholder="Datasource ID"
+                                        style={{ width: '100%' }}
+                                    />,
+                                )}
+                            </FormItem>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Card bordered={false}>
+                            <FormItem label={<span id={`sub_content_${index + 1}`}>Content</span>}>
+                                {getFieldDecorator(`sub_content_${index + 1}`)(
+                                    <TextArea
+                                        // placeholder=""
+                                        autosize={{
+                                            minRows: 6,
+                                        }}
+                                    />,
+                                )}
+                            </FormItem>
+                        </Card>
+                    </Row>
+                </div>,
+            );
+        }
         return (
             <Container>
                 <Title>Create Album Narratives</Title>
                 <div className="new-template">
                     {/* Search Album */}
-                    <SubTitle>1. Search Album</SubTitle>
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
+                        1. Search Album
+                    </SubTitle>
                     <AlbumSearch searchCallback={this.onSearchAlbums} />
 
                     {/* Search result */}
-                    <SubTitle>2. Select an Album</SubTitle>
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
+                        2. Select an Album
+                    </SubTitle>
                     {(this.state.albums && this.state.albums.length && (
                         <Row gutter={16}>
                             <AlbumsDetailTable
                                 albums={this.state.albums}
-                                selected_album_uuid={
-                                    this.state.selected_album_uuid
-                                }
+                                selected_album={this.state.selected_album}
                                 onAlbumClicked={this.onAlbumClicked}
                             />
                         </Row>
@@ -125,14 +216,14 @@ class NewNarratives extends React.Component {
                         'no album'}
 
                     {/* Search Narratives */}
-                    <SubTitle>3. Select a Narrative</SubTitle>
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
+                        3. Select a Narrative
+                    </SubTitle>
                     {(this.state.narratives && this.state.narratives.length && (
                         <Row gutter={16}>
                             <NarrativesDetailTable
                                 narratives={this.state.narratives}
-                                selected_narrative_uuid={
-                                    this.state.selected_narrative_uuid
-                                }
+                                selected_narrative_uuid={this.state.selected_narrative_uuid}
                                 onNarrativeClicked={this.onNarrativeClicked}
                             />
                         </Row>
@@ -140,314 +231,193 @@ class NewNarratives extends React.Component {
                         'no Narrative'}
 
                     {/* Form submit */}
-                    <SubTitle>
-                        4. Update or Create narrative for&nbsp;
-                        {this.state.selected_album_uuid}
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
+                        {`4. Update or Create narrative for album name:${(this.state
+                            .selected_album &&
+                            this.state.selected_album.album_name) ||
+                            ''}, artist name:${(this.state.selected_album &&
+                            this.state.selected_album.artist_name) ||
+                            ''}`}
                     </SubTitle>
-                    {(this.state.selected_album_uuid && (
+                    {(this.state.selected_album && (
                         <Form onSubmit={this.handleSave} layout="vertical">
-                            <Row gutter={16}>
+                            <Row gutter={16} style={{ paddingTop: '1em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                                     <span id="lblMAINTITTLE" className="label">
                                         MAIN TITTLE
                                     </span>
                                 </Col>
-                                <Col xs={10} sm={10} md={10} lg={10} xl={10}>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                                     <FormItem>
                                         {getFieldDecorator('main_title', {
                                             initialValue:
-                                                (this.state.narrative_detail &&
-                                                    this.state.narrative_detail
-                                                        .title) ||
-                                                '',
-                                            rules: [
-                                                {
-                                                    max: 256,
-                                                    message:
-                                                        'Please input less than 256 character!',
-                                                },
-                                            ],
+                                                (narrativeDetail && narrativeDetail.title) || '',
                                         })(
                                             <Input
                                                 id="input_main_title"
                                                 placeholder="title of narrative"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
                             </Row>
-                            <Row gutter={16}>
-                                <Card>
-                                    <Row>
-                                        <Col xs={8} />
-
-                                        <Col xs={8}>
-                                            <FormItem
-                                                label={
-                                                    <span id="'URLembed">
-                                                        URLembed
-                                                    </span>
-                                                }
-                                            >
-                                                {getFieldDecorator('reason')(
-                                                    <Select
-                                                        allowClear
-                                                        getPopupContainer={triggerNode =>
-                                                            triggerNode.parentNode
-                                                        }
-                                                        placeholder="'@The game - URL embed"
-                                                    >
-                                                        <SelectOption value={1}>
-                                                            The game - Artist
-                                                        </SelectOption>
-                                                        <SelectOption value={2}>
-                                                            The game - Single
-                                                        </SelectOption>
-                                                    </Select>
-                                                )}
-                                            </FormItem>
-                                        </Col>
-                                        <Col xs={8} />
-                                    </Row>
+                            {/* <Row gutter={16}>
+                                <Card bordered={false}>
+                                    <FormItem label={<span id="main_content">Content</span>}>
+                                        {getFieldDecorator('main_content', {
+                                            initialValue:
+                                                (narrativeDetail &&
+                                                    narrativeDetail.content_json &&
+                                                    narrativeDetail.content_json.sections &&
+                                                    narrativeDetail.content_json.sections.length >
+                                                        0 &&
+                                                    narrativeDetail.content_json.sections[0]
+                                                        .content) ||
+                                                '',
+                                        })(
+                                            <TextArea
+                                                // placeholder=""
+                                                autosize={{
+                                                    minRows: 6,
+                                                }}
+                                            />,
+                                        )}
+                                    </FormItem>
                                 </Card>
-                            </Row>
-                            <Row gutter={16}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblSub-tittle-1"
-                                        className="label"
-                                    >
-                                        Sub-tittle 1
-                                    </span>
-                                </Col>
-                                <Col xs={10} sm={10} md={10} lg={10} xl={10}>
-                                    <FormItem>
-                                        {getFieldDecorator('sub-tittle-1', {
-                                            rules: [
-                                                {
-                                                    max: 256,
-                                                    message:
-                                                        'Please input less than 256 character!',
-                                                },
-                                            ],
-                                        })(
-                                            <Input
-                                                id="input_sub-tittle-1"
-                                                placeholder="Sub-tittle"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                            </Row>
-                            <Row gutter={16}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span id="lblVideoURL_1" className="label">
-                                        Video URL
-                                    </span>
-                                </Col>
-                                <Col xs={6} sm={8} md={6} lg={6} xl={6}>
-                                    <FormItem>
-                                        {getFieldDecorator('video_url_1')(
-                                            <Input
-                                                id="input_video_url_1"
-                                                placeholder=" Video URL"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblDatasourceID_1"
-                                        className="label"
-                                    >
-                                        Datasource ID
-                                    </span>
-                                </Col>
-                                <Col xs={6} sm={8} md={6} lg={6} xl={6}>
-                                    <FormItem>
-                                        {getFieldDecorator('datasourceID_1')(
-                                            <Input
-                                                id="input_datasourceID_1"
-                                                placeholder="Datasource ID"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                            </Row>
-                            <Row gutter={16}>
-                                <Card />
-                            </Row>
-                            <Row gutter={16}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblSub-tittle-2"
-                                        className="label"
-                                    >
-                                        Sub-tittle 2
-                                    </span>
-                                </Col>
-                                <Col xs={10} sm={10} md={10} lg={10} xl={10}>
-                                    <FormItem>
-                                        {getFieldDecorator('sub-tittle-2', {
-                                            rules: [
-                                                {
-                                                    max: 256,
-                                                    message:
-                                                        'Please input less than 256 character!',
-                                                },
-                                            ],
-                                        })(
-                                            <Input
-                                                id="input_sub-tittle-2"
-                                                placeholder="Sub-tittle"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                            </Row>
-                            <Row gutter={16}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span id="lblVideoURL_2" className="label">
-                                        Video URL
-                                    </span>
-                                </Col>
-                                <Col xs={6} sm={8} md={6} lg={6} xl={6}>
-                                    <FormItem>
-                                        {getFieldDecorator('video_url_2')(
-                                            <Input
-                                                id="input_video_url_2"
-                                                placeholder=" Video URL"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblDatasourceID_2"
-                                        className="label"
-                                    >
-                                        Datasource ID
-                                    </span>
-                                </Col>
-                                <Col xs={6} sm={8} md={6} lg={6} xl={6}>
-                                    <FormItem>
-                                        {getFieldDecorator('datasourceID_2')(
-                                            <Input
-                                                id="input_datasourceID_2"
-                                                placeholder="Datasource ID"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
+                            </Row> */}
+                            {narrativeDetail &&
+                                narrativeDetail.content_json &&
+                                narrativeDetail.content_json.sections &&
+                                narrativeDetail.content_json.sections.length > 1 &&
+                                narrativeDetail.content_json.sections.map((section, index) => (
+                                    <div>
+                                        <Row gutter={16} style={{ paddingTop: '1em' }}>
+                                            <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                                <span
+                                                    id={`lblSub-tittle-${index + 1}`}
+                                                    className="label"
+                                                >
+                                                    {`Sub-tittle ${index + 1}`}
+                                                </span>
+                                            </Col>
+                                            <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                                <FormItem>
+                                                    {getFieldDecorator(`sub-tittle-${index + 1}`, {
+                                                        initialValue: section.title || '',
+                                                    })(
+                                                        <Input
+                                                            id={`input_sub-tittle-${index + 1}`}
+                                                            placeholder="Sub-tittle"
+                                                            style={{ width: '100%' }}
+                                                        />,
+                                                    )}
+                                                </FormItem>
+                                            </Col>
+                                        </Row>
+                                        <Row gutter={16}>
+                                            <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                                <span
+                                                    id={`lblVideoURL_${index + 1}`}
+                                                    className="label"
+                                                >
+                                                    Video URL
+                                                </span>
+                                            </Col>
+                                            <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                                                <FormItem>
+                                                    {getFieldDecorator(`video_url_${index + 1}`, {
+                                                        initialValue: section.datasource_id || '',
+                                                    })(
+                                                        <Input
+                                                            id={`input_video_url_${index + 1}`}
+                                                            placeholder=" Video URL"
+                                                            style={{ width: '100%' }}
+                                                        />,
+                                                    )}
+                                                </FormItem>
+                                            </Col>
+                                            <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                                <span
+                                                    id={`lblDatasourceID_${index + 1}`}
+                                                    className="label"
+                                                >
+                                                    Datasource ID
+                                                </span>
+                                            </Col>
+                                            <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                                                <FormItem>
+                                                    {getFieldDecorator(
+                                                        `datasourceID_${index + 1}`,
+                                                        {
+                                                            initialValue:
+                                                                section.datasource_id || '',
+                                                        },
+                                                    )(
+                                                        <Input
+                                                            id={`input_datasourceID_${index + 1}`}
+                                                            placeholder="Datasource ID"
+                                                            style={{ width: '100%' }}
+                                                        />,
+                                                    )}
+                                                </FormItem>
+                                            </Col>
+                                        </Row>
+                                        <Row gutter={16}>
+                                            <Card bordered={false}>
+                                                <FormItem
+                                                    label={
+                                                        <span id={`sub_content_${index + 1}`}>
+                                                            Content
+                                                        </span>
+                                                    }
+                                                >
+                                                    {getFieldDecorator(`sub_content_${index + 1}`, {
+                                                        initialValue: section.content || '',
+                                                    })(
+                                                        <TextArea
+                                                            // placeholder=""
+                                                            autosize={{
+                                                                minRows: 6,
+                                                            }}
+                                                        />,
+                                                    )}
+                                                </FormItem>
+                                            </Card>
+                                        </Row>
+                                    </div>
+                                ))}
+                            {subSections}
+                            <Row>
+                                <Col xs={24}>
+                                    <Button type="primary" block onClick={this.addSubtitle}>
+                                        Add subtitle
+                                    </Button>
                                 </Col>
                             </Row>
-                            <Row gutter={16}>
-                                <Card />
-                            </Row>
-                            <Row gutter={16}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblSub-tittle-3"
-                                        className="label"
-                                    >
-                                        Sub-tittle 3
-                                    </span>
-                                </Col>
-                                <Col xs={10} sm={10} md={10} lg={10} xl={10}>
-                                    <FormItem>
-                                        {getFieldDecorator('sub-tittle-3', {
-                                            rules: [
-                                                {
-                                                    max: 256,
-                                                    message:
-                                                        'Please input less than 256 character!',
-                                                },
-                                            ],
-                                        })(
-                                            <Input
-                                                id="input_sub-tittle-3"
-                                                placeholder="Sub-tittle"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
+                            <Row>
+                                <Col xs={24}>
+                                    <Card bordered={false}>
+                                        <FormItem label={<span id="hash-tags">Hashtags</span>}>
+                                            {getFieldDecorator('hash-tags')(
+                                                <TextArea
+                                                    placeholder="#TaylorSwift #Pop #Reputation #Endgame"
+                                                    autosize={{
+                                                        minRows: 4,
+                                                    }}
+                                                />,
+                                            )}
+                                        </FormItem>
+                                    </Card>
                                 </Col>
                             </Row>
-                            <Row gutter={16}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span id="lblVideoURL_1" className="label">
-                                        Video URL
-                                    </span>
-                                </Col>
-                                <Col xs={6} sm={8} md={6} lg={6} xl={6}>
-                                    <FormItem>
-                                        {getFieldDecorator('video_url_3')(
-                                            <Input
-                                                id="input_video_url_3"
-                                                placeholder=" Video URL"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span
-                                        id="lblDatasourceID_3"
-                                        className="label"
-                                    >
-                                        Datasource ID
-                                    </span>
-                                </Col>
-                                <Col xs={6} sm={8} md={6} lg={6} xl={6}>
-                                    <FormItem>
-                                        {getFieldDecorator('datasourceID_3')(
-                                            <Input
-                                                id="input_datasourceID_3"
-                                                placeholder="Datasource ID"
-                                                style={{ width: '100%' }}
-                                            />
-                                        )}
-                                    </FormItem>
-                                </Col>
-                            </Row>
-                            <Row gutter={16}>
-                                <Card />
-                            </Row>
-                            <Col xs={24}>
-                                <FormItem
-                                    label={<span id="hashtags">Hashtags</span>}
-                                >
-                                    {getFieldDecorator('hashtags')(
-                                        <TextArea
-                                            placeholder="#TaylorSwift #Pop #Reputation #Endgame"
-                                            autosize={{
-                                                minRows: 4,
-                                                maxRows: 6,
-                                            }}
-                                        />
-                                    )}
-                                </FormItem>
-                            </Col>
                             <Row>
                                 <Col span={24} style={{ textAlign: 'right' }}>
                                     <Button id="btnCancel">Cancel</Button>
-                                    <Button
-                                        id="btnSave"
-                                        onClick={this.handleSave}
-                                    >
+                                    <Button id="btnSave" onClick={this.handleSave}>
                                         Save
                                     </Button>
-                                    <Button
-                                        type="primary"
-                                        htmlType="submit"
-                                        id="btnSubmit"
-                                    >
+                                    <Button type="primary" htmlType="submit" id="btnSubmit">
                                         Create
                                     </Button>
                                 </Col>
@@ -467,9 +437,6 @@ const Container = styled.div`
     padding: 1em 0 0 1em;
     color: #000;
     .new-template {
-        .ant-card-wider-padding .ant-card-body {
-            padding: 2em 0;
-        }
         .label {
             float: right;
         }
@@ -478,6 +445,9 @@ const Container = styled.div`
         }
         #lblThreshold {
             padding-bottom: 20px;
+        }
+        .ant-card-wider-padding .ant-card-body {
+            padding: 2em 2em;
         }
     }
 `;
