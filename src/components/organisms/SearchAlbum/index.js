@@ -1,14 +1,11 @@
 import {
-    Button, Card, Col, Form, Input, Row, Select,
+    Button, Col, Form, Input, Row,
 } from 'antd';
 import PropTypes from 'prop-types';
 import React from 'react';
-import styled from 'styled-components';
 import { searchAlbums } from '../../../api/index';
 
 const FormItem = Form.Item;
-const SelectOption = Select.Option;
-const { TextArea } = Input;
 
 class AlbumSearch extends React.Component {
     constructor(props) {
@@ -29,7 +26,7 @@ class AlbumSearch extends React.Component {
                 searchAlbums(album_name, artist_name)
                     .then(res => res.data.albums)
                     .then((albums) => {
-                        console.log(albums);
+                        // console.log(albums);
                         if (this.props.searchCallback) {
                             this.props.searchCallback(albums);
                         }
@@ -102,6 +99,6 @@ class AlbumSearch extends React.Component {
 }
 AlbumSearch.propTypes = {
     form: PropTypes.object.isRequired,
-    searchCallback: PropTypes.function,
+    searchCallback: PropTypes.func.isRequired,
 };
 export default Form.create()(AlbumSearch);

@@ -24,7 +24,6 @@ import {
 import AlbumSearch from '../../organisms/SearchAlbum/index';
 import AlbumsDetailTable from './albums-details-table';
 import NarrativesDetailTable from './narratives-details-table';
-import { dummyJsonContent } from './test';
 
 const FormItem = Form.Item;
 const { TextArea } = Input;
@@ -49,30 +48,43 @@ class NewNarratives extends React.Component {
             narrativeDetail: null,
             numberSubSection: 3,
             editorState: initEditor,
+            hashTag: '',
+            contents: [],
         };
-        this.onChangeMain = index => editor => {
-            const { editorState, narrativeDetail } = this.state;
+        this.onChangeEditor = index => editor => {
+            const { editorState, narrativeDetail, contents } = this.state;
             editorState[`section${index}`] = editor;
             const rawContentState = convertToRaw(editor.getCurrentContent());
             const markup = draftToMarkdown(rawContentState);
             if (narrativeDetail) {
                 narrativeDetail.content_json.sections[index].content = markup;
+            } else {
+                contents[index] = markup;
             }
-
-            console.log('narrativeDetail', narrativeDetail);
-            this.setState({ editorState, narrativeDetail });
+            this.setState({ editorState, narrativeDetail, contents });
         };
 
         this.refsEditor = React.createRef();
     }
 
+    // onChangeEditor = () => index => editor => {
+    //     const { editorState, narrativeDetail, contents } = this.state;
+    //     editorState[`section${index}`] = editor;
+    //     const rawContentState = convertToRaw(editor.getCurrentContent());
+    //     const markup = draftToMarkdown(rawContentState);
+    //     if (narrativeDetail) {
+    //         narrativeDetail.content_json.sections[index].content = markup;
+    //     } else {
+    //         contents[index] = markup;
+    //     }
+    //     this.setState({ editorState, narrativeDetail, contents });
+    // };
+
     onAlbumClicked = album => {
         this.setState({ selected_album: album, narratives: [] });
-        console.log(album);
         getAlbumNarratives(album.id)
             .then(res => res.data.narratives)
             .then(narratives => {
-                console.log('narratives', narratives);
                 this.setState({ narratives });
             })
             .catch(e => console.log(e.message));
@@ -88,7 +100,6 @@ class NewNarratives extends React.Component {
         getNarrativeDetail(narrativeUuid)
             .then(res => res.data)
             .then(narrativeDetail => {
-                console.log('narrative', narrativeDetail);
                 if (
                     narrativeDetail &&
                     narrativeDetail.content_json &&
@@ -100,9 +111,16 @@ class NewNarratives extends React.Component {
                         );
                     }
                 }
+                let hashTag = '';
+                if (narrativeDetail && narrativeDetail.tags) {
+                    for (let i = 0; i < narrativeDetail.tags.length; i += 1) {
+                        hashTag += `#${narrativeDetail.tags[i].title} `;
+                    }
+                }
                 this.setState({
                     narrativeDetail,
                     editorState,
+                    hashTag,
                 });
             })
             .catch(e => console.log(e.message));
@@ -114,47 +132,62 @@ class NewNarratives extends React.Component {
 
     handleCreate = e => {
         e.preventDefault();
-        console.log('create');
-        this.props.form.validateFields((err, values) => {
-            if (!err) {
-                console.log('Received values of form: ', values);
-                createNarrative(
-                    '5F5D505C73B6467C995C517B3C4638EC', // album_id
-                    '33554566518315', // user_id
-                    'test-create', // title
-                    dummyJsonContent, // content_json
-                );
-            }
-        });
+        const { selected_album, contents } = this.state;
+        if (selected_album && contents.length > 0) {
+            this.props.form.validateFields((err, values) => {
+                if (!err) {
+                    console.log('Received values of form: ', values);
+                    const sections = [];
+                    sections.push({ content: contents[0] });
+                    for (let index = 1; index <= 3; index += 1) {
+                        const section = {
+                            title: values[`sub-tittle-new-${index}`],
+                            datasource_id: values[`datasourceID_new_${index}`],
+                            content: contents[index],
+                        };
+                        sections.push(section);
+                    }
+                    createNarrative(
+                        selected_album.id, // album_id
+                        values.author || '297513575490577', // user_id
+                        values.main_title, // title
+                        { sections }, // content_json
+                    );
+                }
+            });
+        }
     };
 
     handleSave = e => {
         e.preventDefault();
         console.log('update');
+        const { narrativeUuid, selected_album, narrativeDetail } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 console.log('Received values of form: ', values);
-                updateNarrative(
-                    '1AD72246B5F3436ABD9B154385E1B412', // narrative_id
-                    '5F5D505C73B6467C995C517B3C4638EC', // album_id
-                    '33554566518315', // user_id
-                    'test-update', // title
-                    dummyJsonContent, // content_json
-                );
+                if (narrativeDetail && narrativeDetail.content_json) {
+                    updateNarrative(
+                        narrativeUuid, // narrative_id
+                        selected_album.id, // album_id
+                        values.author || '297513575490577', // user_id
+                        values.main_title, // title
+                        narrativeDetail.content_json, // content_json
+                    );
+                }
             }
         });
     };
 
     handleCancel = e => {
         e.preventDefault();
-        const { resetFields } = this.props.form;
         this.setState({
             narrativeDetail: null,
             selected_narrative_uuid: null,
             numberSubSection: 3,
             editorState: initEditor,
+            hashTag: '',
         });
-        resetFields();
+        this.props.form.resetFields();
     };
 
     addSection = () => {
@@ -163,7 +196,9 @@ class NewNarratives extends React.Component {
 
     render() {
         const { getFieldDecorator } = this.props.form;
-        const { narrativeDetail, numberSubSection, editorState } = this.state;
+        const {
+            narrativeDetail, numberSubSection, editorState, hashTag
+        } = this.state;
         let start = 1;
         if (
             narrativeDetail &&
@@ -173,20 +208,20 @@ class NewNarratives extends React.Component {
             start = narrativeDetail.content_json.sections.length;
         }
         const subSections = [];
-        for (let index = start; index < numberSubSection; index += 1) {
+        for (let index = start; index <= numberSubSection; index += 1) {
             subSections.push(
                 <div key={index}>
                     <Row gutter={16} style={{ paddingTop: '1em' }}>
                         <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                            <span id={`lblSub-tittle-${index}`} className="label">
+                            <span id={`lblSub-tittle-new-${index}`} className="label">
                                 {`Sub-tittle ${index}`}
                             </span>
                         </Col>
                         <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                             <FormItem>
-                                {getFieldDecorator(`sub-tittle-${index}`)(
+                                {getFieldDecorator(`sub-tittle-new-${index}`)(
                                     <Input
-                                        id={`input_sub-tittle-${index}`}
+                                        id={`input_sub-tittle-new-${index}`}
                                         placeholder="Sub-tittle"
                                         style={{ width: '100%' }}
                                     />,
@@ -202,9 +237,9 @@ class NewNarratives extends React.Component {
                         </Col>
                         <Col xs={8} sm={8} md={8} lg={8} xl={8}>
                             <FormItem>
-                                {getFieldDecorator(`video_url_${index}`)(
+                                {getFieldDecorator(`video_url_new_${index}`)(
                                     <Input
-                                        id={`input_video_url_${index}`}
+                                        id={`input_video_url_new_${index}`}
                                         placeholder=" Video URL"
                                         style={{ width: '100%' }}
                                     />,
@@ -218,9 +253,9 @@ class NewNarratives extends React.Component {
                         </Col>
                         <Col xs={8} sm={8} md={8} lg={8} xl={8}>
                             <FormItem>
-                                {getFieldDecorator(`datasourceID_${index}`)(
+                                {getFieldDecorator(`datasourceID_new_${index}`)(
                                     <Input
-                                        id={`input_datasourceID_${index}`}
+                                        id={`input_datasourceID_new_${index}`}
                                         placeholder="Datasource ID"
                                         style={{ width: '100%' }}
                                     />,
@@ -233,9 +268,8 @@ class NewNarratives extends React.Component {
                         <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                             <Card bordered>
                                 <Editor
-                                    // ref={this.refsEditor}
-                                    editorState={editorState[`section${index}`]}
-                                    onChange={this.onChangeMain(index)}
+                                    editorState={this.state.editorState[`section${index}`]}
+                                    onChange={this.onChangeEditor(index)}
                                     toolbarConfig={toolbarConfig}
                                 />
                             </Card>
@@ -244,6 +278,7 @@ class NewNarratives extends React.Component {
                 </div>,
             );
         }
+
         return (
             <Container>
                 <Title>Create Album Narratives</Title>
@@ -294,7 +329,7 @@ class NewNarratives extends React.Component {
                             ''}`}
                     </SubTitle>
                     {(this.state.selected_album && (
-                        <Form onSubmit={this.handleSave} layout="vertical">
+                        <Form onSubmit={this.handleCreate} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                                     <span id="lblAuthor" className="label">
@@ -344,7 +379,7 @@ class NewNarratives extends React.Component {
                                         <Editor
                                             // ref={this.refsEditor}
                                             editorState={editorState.section0}
-                                            onChange={this.onChangeMain(0)}
+                                            onChange={this.onChangeEditor(0)}
                                             // inlineButtons={this.inlineButtons}
                                             // blockButtons={this.blockButtons}
                                             toolbarConfig={toolbarConfig}
@@ -466,7 +501,7 @@ class NewNarratives extends React.Component {
                                                                             `section${index}`
                                                                         ]
                                                                     }
-                                                                    onChange={this.onChangeMain(
+                                                                    onChange={this.onChangeEditor(
                                                                         index,
                                                                     )}
                                                                     toolbarConfig={toolbarConfig}
@@ -492,7 +527,9 @@ class NewNarratives extends React.Component {
                                 <Col xs={24}>
                                     <Card bordered={false}>
                                         <FormItem label={<span id="hash-tags">Hashtags</span>}>
-                                            {getFieldDecorator('hash-tags')(
+                                            {getFieldDecorator('hashTags', {
+                                                initialValue: hashTag || '',
+                                            })(
                                                 <TextArea
                                                     placeholder="#TaylorSwift #Pop #Reputation #Endgame"
                                                     autosize={{
