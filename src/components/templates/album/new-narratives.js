@@ -5,25 +5,19 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
-import {
-    Button, Card, Col, Form, Input, Row
-} from 'antd';
-import { convertToRaw } from 'draft-js';
-import draftToMarkdown from 'draftjs-to-markdown';
+import { Button, Card, Col, Form, Input, Row } from 'antd';
+import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
+// import draftToMarkdown from 'draftjs-to-markdown';
+import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
 import { createEditorState, Editor } from 'medium-draft';
 import 'medium-draft/lib/index.css';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
-import {
-    createNarrative,
-    getAlbumNarratives,
-    getNarrativeDetail,
-    setNarrativeTags,
-    updateNarrative,
-} from '../../../api/index';
+import { createNarrative, getAlbumNarratives, getNarrativeDetail, setNarrativeTags, updateNarrative } from '../../../api/index';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
 import AlbumsDetailTable from './albums-details-table';
+import KeywordTable from './keyword-table';
 import NarrativesDetailTable from './narratives-details-table';
 
 const FormItem = Form.Item;
@@ -37,8 +31,8 @@ class NewNarratives extends React.Component {
         super(props);
         this.state = {
             albums: [],
-            selected_album: null,
-            selected_narrative_uuid: null,
+            selectedAlbum: null,
+            selectedNarrativeUuid: null,
             narratives: [],
             narrativeDetail: null,
             numberSubSection: 3,
@@ -50,12 +44,13 @@ class NewNarratives extends React.Component {
             },
             hashTag: '',
             contents: [],
+            keywords: [],
         };
         this.onChangeEditor = index => editor => {
             const { editorState, narrativeDetail, contents } = this.state;
             editorState[`section${index}`] = editor;
             const rawContentState = convertToRaw(editor.getCurrentContent());
-            const markup = draftToMarkdown(rawContentState);
+            const markup = draftjsToMd(rawContentState);
             if (narrativeDetail) {
                 narrativeDetail.content_json.sections[index].content = markup;
             } else {
@@ -68,7 +63,8 @@ class NewNarratives extends React.Component {
     }
 
     onAlbumClicked = album => {
-        this.setState({ selected_album: album, narratives: [] });
+        this.handleCancel();
+        this.setState({ selectedAlbum: album, narratives: [] });
         getAlbumNarratives(album.id)
             .then(res => res.data.narratives)
             .then(narratives => {
@@ -78,12 +74,13 @@ class NewNarratives extends React.Component {
     };
 
     onNarrativeClicked = narrativeUuid => {
-        if (this.state.selected_narrative_uuid === narrativeUuid) {
-            this.setState({ selected_narrative_uuid: null });
+        if (this.state.selectedNarrativeUuid === narrativeUuid) {
+            this.setState({ selectedNarrativeUuid: null });
             return;
         }
         const { editorState } = this.state;
-        this.setState({ selected_narrative_uuid: narrativeUuid });
+        this.setState({ selectedNarrativeUuid: narrativeUuid });
+        let keywords = [];
         getNarrativeDetail(narrativeUuid)
             .then(res => res.data)
             .then(narrativeDetail => {
@@ -93,9 +90,27 @@ class NewNarratives extends React.Component {
                     narrativeDetail.content_json.sections
                 ) {
                     for (let i = 0; i < narrativeDetail.content_json.sections.length; i += 1) {
-                        editorState[`section${i}`] = createEditorState(
+                        const rawData = mdToDraftjs(
                             narrativeDetail.content_json.sections[i].content,
                         );
+                        const nodes = narrativeDetail.content_json.sections[i].content.split(
+                            '\r\n',
+                        );
+                        const content = [];
+                        nodes.forEach(node => {
+                            // Link (Text + URL)
+                            if (node.indexOf('[') === 0) {
+                                const matches = node.match(/\[(.*)\]\((.*)\)/);
+                                content.push({
+                                    text: matches[1],
+                                    url: matches[2],
+                                });
+                            }
+                        });
+                        keywords = keywords.concat(content);
+                        const contentState = convertFromRaw(rawData);
+                        const newEditorState = EditorState.createWithContent(contentState);
+                        editorState[`section${i}`] = newEditorState;
                     }
                 }
                 let hashTag = '';
@@ -108,6 +123,7 @@ class NewNarratives extends React.Component {
                     narrativeDetail,
                     editorState,
                     hashTag,
+                    keywords,
                 });
             })
             .catch(e => console.log(e.message));
@@ -119,8 +135,8 @@ class NewNarratives extends React.Component {
 
     handleCreate = e => {
         e.preventDefault();
-        const { selected_album, contents } = this.state;
-        if (selected_album && contents.length > 0) {
+        const { selectedAlbum, contents } = this.state;
+        if (selectedAlbum && contents.length > 0) {
             this.props.form.validateFields((err, values) => {
                 if (!err) {
                     console.log('Received values of form: ', values);
@@ -139,13 +155,23 @@ class NewNarratives extends React.Component {
                         .map(item => item.trim())
                         .slice(1);
                     createNarrative(
-                        selected_album.id, // album_id
+                        selectedAlbum.id, // album_id
                         values.author || '297513575490577', // user_id
                         values.main_title, // title
                         { sections }, // content_json
                     )
                         .then(res => res.data.narrative.id)
                         .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
+                        .then(() => {
+                            this.handleCancel();
+                            getAlbumNarratives(selectedAlbum.id)
+                                .then(res => res.data.narratives)
+                                .then(narratives => {
+                                    this.setState({ narratives });
+                                })
+                                .catch(e => console.log(e.message));
+                            alert('create narrative success');
+                        })
                         .catch(err => console.log('update fail', err.message));
                 }
             });
@@ -155,7 +181,7 @@ class NewNarratives extends React.Component {
     handleSave = e => {
         e.preventDefault();
         console.log('update');
-        const { selected_narrative_uuid, selected_album, narrativeDetail } = this.state;
+        const { selectedNarrativeUuid, selectedAlbum, narrativeDetail } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 console.log('Received values of form: ', values);
@@ -163,26 +189,42 @@ class NewNarratives extends React.Component {
                     .split('#')
                     .map(item => item.trim())
                     .slice(1);
-                if (selected_narrative_uuid && narrativeDetail && narrativeDetail.content_json) {
+
+                if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
+                    for (let index = 1; index <= 3; index += 1) {
+                        narrativeDetail.content_json.sections[index].title =
+                            values[`sub-tittle-${index}`];
+                        narrativeDetail.content_json.sections[index].datasource_id =
+                            values[`datasourceID_${index}`];
+                    }
                     updateNarrative(
-                        selected_narrative_uuid, // narrative_id
-                        selected_album.id, // album_id
+                        selectedNarrativeUuid, // narrative_id
+                        selectedAlbum.id, // album_id
                         values.author || '297513575490577', // user_id
                         values.main_title, // title
                         narrativeDetail.content_json, // content_json
                     )
-                        .then(setNarrativeTags(selected_narrative_uuid, hashtag))
+                        .then(() => setNarrativeTags(selectedNarrativeUuid, hashtag))
+                        .then(() => {
+                            this.handleCancel();
+                            getAlbumNarratives(selectedAlbum.id)
+                                .then(res => res.data.narratives)
+                                .then(narratives => {
+                                    this.setState({ narratives });
+                                })
+                                .catch(e => console.log(e.message));
+                            alert('update narrative success');
+                        })
                         .catch(err => console.log('update fail', err.message));
                 }
             }
         });
     };
 
-    handleCancel = e => {
-        e.preventDefault();
+    handleCancel = () => {
         this.setState({
             narrativeDetail: null,
-            selected_narrative_uuid: null,
+            selectedNarrativeUuid: null,
             numberSubSection: 3,
             editorState: {
                 section0: createEditorState(),
@@ -202,7 +244,7 @@ class NewNarratives extends React.Component {
     render() {
         const { getFieldDecorator } = this.props.form;
         const {
-            narrativeDetail, numberSubSection, editorState, hashTag
+            narrativeDetail, numberSubSection, editorState, hashTag, keywords
         } = this.state;
         let start = 1;
         if (
@@ -302,7 +344,7 @@ class NewNarratives extends React.Component {
                         <Row gutter={16}>
                             <AlbumsDetailTable
                                 albums={this.state.albums}
-                                selected_album={this.state.selected_album}
+                                selected_album={this.state.selectedAlbum}
                                 onAlbumClicked={this.onAlbumClicked}
                             />
                         </Row>
@@ -317,7 +359,7 @@ class NewNarratives extends React.Component {
                         <Row gutter={16}>
                             <NarrativesDetailTable
                                 narratives={this.state.narratives}
-                                selected_narrative_uuid={this.state.selected_narrative_uuid}
+                                selected_narrative_uuid={this.state.selectedNarrativeUuid}
                                 onNarrativeClicked={this.onNarrativeClicked}
                             />
                         </Row>
@@ -327,13 +369,13 @@ class NewNarratives extends React.Component {
                     {/* Form submit */}
                     <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
                         {`4. Update or Create narrative for album name:${(this.state
-                            .selected_album &&
-                            this.state.selected_album.album_name) ||
-                            ''}, artist name:${(this.state.selected_album &&
-                            this.state.selected_album.artist_name) ||
+                            .selectedAlbum &&
+                            this.state.selectedAlbum.album_name) ||
+                            ''}, artist name:${(this.state.selectedAlbum &&
+                            this.state.selectedAlbum.artist_name) ||
                             ''}`}
                     </SubTitle>
-                    {(this.state.selected_album && (
+                    {(this.state.selectedAlbum && (
                         <Form onSubmit={this.handleCreate} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
@@ -543,6 +585,13 @@ class NewNarratives extends React.Component {
                                                 />,
                                             )}
                                         </FormItem>
+                                    </Card>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col xs={24}>
+                                    <Card title="keyword" bordered={false}>
+                                        <KeywordTable keywords={keywords} />
                                     </Card>
                                 </Col>
                             </Row>
