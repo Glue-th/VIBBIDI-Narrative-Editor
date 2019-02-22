@@ -1,3 +1,4 @@
+/* eslint-disable object-shorthand */
 /* eslint-disable comma-dangle */
 import axios from 'axios';
 
@@ -21,18 +22,11 @@ export function getNarrativeDetail(narrativeUuid) {
 }
 
 export function createNarrative(albumId, userId, title, contentJson) {
-    const formData = new FormData();
-    formData.set('album_id', albumId);
-    formData.set('user_id', userId);
-    formData.set('title', title);
-    formData.set('content_json', contentJson);
-    return axios({
-        method: 'POST',
-        url: `${API_HOST}/api/v6/narratives`,
-        data: formData,
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
+    return axios.post(`${API_HOST}/api/v6/narratives`, {
+        album_id: albumId,
+        user_id: userId,
+        title: title,
+        content_json: contentJson,
     });
 }
 
@@ -44,18 +38,19 @@ export function updateNarrative(
     title,
     contentJson
 ) {
-    const formData = new FormData();
-    formData.set('narrative_id', narrativeId);
-    formData.set('album_id', albumId);
-    formData.set('user_id', userId);
-    formData.set('title', title);
-    formData.set('content_json', contentJson);
-    return axios({
-        method: 'POST',
-        url: `${API_HOST}/api/v6/narratives`,
-        data: formData,
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
+    return axios.post(`${API_HOST}/api/v6/narratives`, {
+        narrative_id: narrativeId,
+        album_id: albumId,
+        user_id: userId,
+        title: title,
+        content_json: contentJson,
     });
+}
+
+export function getNarrativeTags(narrativeId) {
+    return axios.get(`${API_HOST}/api/v6/narratives/tags/${narrativeId}`);
+}
+
+export function getNarrativeByUserId(userId) {
+    return axios.get(`${API_HOST}/api/v6/narratives/user/${userId}`);
 }

@@ -8,6 +8,10 @@
 import {
     Button, Card, Col, Form, Input, Row
 } from 'antd';
+import { convertToRaw } from 'draft-js';
+import draftToMarkdown from 'draftjs-to-markdown';
+import { createEditorState, Editor } from 'medium-draft';
+import 'medium-draft/lib/index.css';
 import PropTypes from 'prop-types';
 import React from 'react';
 import styled from 'styled-components';
@@ -24,7 +28,16 @@ import { dummyJsonContent } from './test';
 
 const FormItem = Form.Item;
 const { TextArea } = Input;
-
+const toolbarConfig = {
+    block: [],
+    inline: ['BOLD', 'ITALIC', 'UNDERLINE', 'hyperlink'],
+};
+const initEditor = {
+    section0: createEditorState(),
+    section1: createEditorState(),
+    section2: createEditorState(),
+    section3: createEditorState(),
+};
 class NewNarratives extends React.Component {
     constructor(props) {
         super(props);
@@ -34,8 +47,23 @@ class NewNarratives extends React.Component {
             selected_narrative_uuid: null,
             narratives: [],
             narrativeDetail: null,
-            numberSubSection: 0,
+            numberSubSection: 3,
+            editorState: initEditor,
         };
+        this.onChangeMain = index => editor => {
+            const { editorState, narrativeDetail } = this.state;
+            editorState[`section${index}`] = editor;
+            const rawContentState = convertToRaw(editor.getCurrentContent());
+            const markup = draftToMarkdown(rawContentState);
+            if (narrativeDetail) {
+                narrativeDetail.content_json.sections[index].content = markup;
+            }
+
+            console.log('narrativeDetail', narrativeDetail);
+            this.setState({ editorState, narrativeDetail });
+        };
+
+        this.refsEditor = React.createRef();
     }
 
     onAlbumClicked = album => {
@@ -55,12 +83,27 @@ class NewNarratives extends React.Component {
             this.setState({ selected_narrative_uuid: null });
             return;
         }
+        const { editorState } = this.state;
         this.setState({ selected_narrative_uuid: narrativeUuid });
         getNarrativeDetail(narrativeUuid)
             .then(res => res.data)
-            .then(narrative => {
-                console.log('narrative', narrative);
-                this.setState({ narrativeDetail: narrative });
+            .then(narrativeDetail => {
+                console.log('narrative', narrativeDetail);
+                if (
+                    narrativeDetail &&
+                    narrativeDetail.content_json &&
+                    narrativeDetail.content_json.sections
+                ) {
+                    for (let i = 0; i < narrativeDetail.content_json.sections.length; i += 1) {
+                        editorState[`section${i}`] = createEditorState(
+                            narrativeDetail.content_json.sections[i].content,
+                        );
+                    }
+                }
+                this.setState({
+                    narrativeDetail,
+                    editorState,
+                });
             })
             .catch(e => console.log(e.message));
     };
@@ -102,13 +145,25 @@ class NewNarratives extends React.Component {
         });
     };
 
+    handleCancel = e => {
+        e.preventDefault();
+        const { resetFields } = this.props.form;
+        this.setState({
+            narrativeDetail: null,
+            selected_narrative_uuid: null,
+            numberSubSection: 3,
+            editorState: initEditor,
+        });
+        resetFields();
+    };
+
     addSection = () => {
         this.setState(prevState => ({ numberSubSection: prevState.numberSubSection + 1 }));
     };
 
     render() {
         const { getFieldDecorator } = this.props.form;
-        const { narrativeDetail, numberSubSection } = this.state;
+        const { narrativeDetail, numberSubSection, editorState } = this.state;
         let start = 1;
         if (
             narrativeDetail &&
@@ -118,9 +173,9 @@ class NewNarratives extends React.Component {
             start = narrativeDetail.content_json.sections.length;
         }
         const subSections = [];
-        for (let index = start; index < numberSubSection + start; index += 1) {
+        for (let index = start; index < numberSubSection; index += 1) {
             subSections.push(
-                <div>
+                <div key={index}>
                     <Row gutter={16} style={{ paddingTop: '1em' }}>
                         <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                             <span id={`lblSub-tittle-${index}`} className="label">
@@ -174,18 +229,17 @@ class NewNarratives extends React.Component {
                         </Col>
                     </Row>
                     <Row gutter={16}>
-                        <Card bordered={false}>
-                            <FormItem label={<span id={`sub_content_${index}`}>Content</span>}>
-                                {getFieldDecorator(`sub_content_${index}`)(
-                                    <TextArea
-                                        // placeholder=""
-                                        autosize={{
-                                            minRows: 6,
-                                        }}
-                                    />,
-                                )}
-                            </FormItem>
-                        </Card>
+                        <Col xs={3} sm={3} md={3} lg={3} xl={3} />
+                        <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                            <Card bordered>
+                                <Editor
+                                    // ref={this.refsEditor}
+                                    editorState={editorState[`section${index}`]}
+                                    onChange={this.onChangeMain(index)}
+                                    toolbarConfig={toolbarConfig}
+                                />
+                            </Card>
+                        </Col>
                     </Row>
                 </div>,
             );
@@ -243,6 +297,27 @@ class NewNarratives extends React.Component {
                         <Form onSubmit={this.handleSave} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                    <span id="lblAuthor" className="label">
+                                        Author
+                                    </span>
+                                </Col>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                    <FormItem>
+                                        {getFieldDecorator('author', {
+                                            initialValue:
+                                                (narrativeDetail && narrativeDetail.user_id) || '',
+                                        })(
+                                            <Input
+                                                id="input_author"
+                                                placeholder="author"
+                                                style={{ width: '100%' }}
+                                            />,
+                                        )}
+                                    </FormItem>
+                                </Col>
+                            </Row>
+                            <Row gutter={16} style={{ paddingTop: '1em' }}>
+                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                                     <span id="lblMAINTITTLE" className="label">
                                         MAIN TITTLE
                                     </span>
@@ -263,28 +338,19 @@ class NewNarratives extends React.Component {
                                 </Col>
                             </Row>
                             <Row gutter={16}>
-                                <Card bordered={false}>
-                                    <FormItem label={<span id="main_content">Content</span>}>
-                                        {getFieldDecorator('main_content', {
-                                            initialValue:
-                                                (narrativeDetail &&
-                                                    narrativeDetail.content_json &&
-                                                    narrativeDetail.content_json.sections &&
-                                                    narrativeDetail.content_json.sections.length >
-                                                        0 &&
-                                                    narrativeDetail.content_json.sections[0]
-                                                        .content) ||
-                                                '',
-                                        })(
-                                            <TextArea
-                                                // placeholder=""
-                                                autosize={{
-                                                    minRows: 6,
-                                                }}
-                                            />,
-                                        )}
-                                    </FormItem>
-                                </Card>
+                                <Col xs={3} sm={3} md={3} lg={3} xl={3} />
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                    <Card bordered>
+                                        <Editor
+                                            // ref={this.refsEditor}
+                                            editorState={editorState.section0}
+                                            onChange={this.onChangeMain(0)}
+                                            // inlineButtons={this.inlineButtons}
+                                            // blockButtons={this.blockButtons}
+                                            toolbarConfig={toolbarConfig}
+                                        />
+                                    </Card>
+                                </Col>
                             </Row>
                             <Card title="Sections" bordered={false}>
                                 {narrativeDetail &&
@@ -294,7 +360,7 @@ class NewNarratives extends React.Component {
                                     narrativeDetail.content_json.sections.map((section, index) => {
                                         if (index > 0) {
                                             return (
-                                                <div>
+                                                <div key={index}>
                                                     <Row gutter={16} style={{ paddingTop: '1em' }}>
                                                         <Col xs={3} sm={3} md={3} lg={3} xl={3}>
                                                             <span
@@ -384,32 +450,29 @@ class NewNarratives extends React.Component {
                                                         </Col>
                                                     </Row>
                                                     <Row gutter={16}>
-                                                        <Card bordered={false}>
-                                                            <FormItem
-                                                                label={
-                                                                    <span
-                                                                        id={`sub_content_${index}`}
-                                                                    >
-                                                                        Content
-                                                                    </span>
-                                                                }
-                                                            >
-                                                                {getFieldDecorator(
-                                                                    `sub_content_${index}`,
-                                                                    {
-                                                                        initialValue:
-                                                                            section.content || '',
-                                                                    },
-                                                                )(
-                                                                    <TextArea
-                                                                        // placeholder=""
-                                                                        autosize={{
-                                                                            minRows: 6,
-                                                                        }}
-                                                                    />,
-                                                                )}
-                                                            </FormItem>
-                                                        </Card>
+                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3} />
+                                                        <Col
+                                                            xs={20}
+                                                            sm={20}
+                                                            md={20}
+                                                            lg={20}
+                                                            xl={20}
+                                                        >
+                                                            <Card bordered>
+                                                                <Editor
+                                                                    // ref={this.refsEditor}
+                                                                    editorState={
+                                                                        editorState[
+                                                                            `section${index}`
+                                                                        ]
+                                                                    }
+                                                                    onChange={this.onChangeMain(
+                                                                        index,
+                                                                    )}
+                                                                    toolbarConfig={toolbarConfig}
+                                                                />
+                                                            </Card>
+                                                        </Col>
                                                     </Row>
                                                 </div>
                                             );
@@ -418,13 +481,13 @@ class NewNarratives extends React.Component {
                                     })}
                                 {subSections}
                             </Card>
-                            <Row>
+                            {/* <Row>
                                 <Col xs={23}>
                                     <Button type="primary" block onClick={this.addSection}>
                                         Add Section
                                     </Button>
                                 </Col>
-                            </Row>
+                            </Row> */}
                             <Row>
                                 <Col xs={24}>
                                     <Card bordered={false}>
@@ -443,12 +506,14 @@ class NewNarratives extends React.Component {
                             </Row>
                             <Row>
                                 <Col span={24} style={{ textAlign: 'right' }}>
-                                    <Button id="btnCancel">Cancel</Button>
+                                    <Button id="btnCancel" onClick={this.handleCancel}>
+                                        Cancel
+                                    </Button>
                                     <Button id="btnSave" onClick={this.handleSave}>
                                         Save
                                     </Button>
                                     <Button type="primary" htmlType="submit" id="btnSubmit">
-                                        Create
+                                        Finish
                                     </Button>
                                 </Col>
                             </Row>
@@ -470,14 +535,16 @@ const Container = styled.div`
         .label {
             float: right;
         }
-        button {
+        #btnSubmit,
+        #btnCancel,
+        #btnSave {
             margin-left: 16px;
         }
         #lblThreshold {
             padding-bottom: 20px;
         }
-        .ant-card-wider-padding .ant-card-body {
-            padding: 2em 2em;
+        .ant-card-body {
+            padding: 0;
         }
     }
 `;
