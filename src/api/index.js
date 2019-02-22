@@ -47,6 +47,13 @@ export function updateNarrative(
     });
 }
 
+export function setNarrativeTags(narrativeId, tags) {
+    return axios.post(`${API_HOST}/api/v6/narratives/tags/`, {
+        narrative_id: narrativeId, // D746DF53D6D0493599059418600923E7
+        tags: tags, // ["tag1","tag2","tag3"]
+    });
+}
+
 export function getNarrativeTags(narrativeId) {
     return axios.get(`${API_HOST}/api/v6/narratives/tags/${narrativeId}`);
 }
