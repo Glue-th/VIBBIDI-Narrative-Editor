@@ -163,7 +163,14 @@ class NewNarratives extends React.Component {
                     .split('#')
                     .map(item => item.trim())
                     .slice(1);
+
                 if (selected_narrative_uuid && narrativeDetail && narrativeDetail.content_json) {
+                    for (let index = 1; index <= 3; index += 1) {
+                        narrativeDetail.content_json.sections[index].title =
+                            values[`sub-tittle-${index}`];
+                        narrativeDetail.content_json.sections[index].datasource_id =
+                            values[`datasourceID_${index}`];
+                    }
                     updateNarrative(
                         selected_narrative_uuid, // narrative_id
                         selected_album.id, // album_id
