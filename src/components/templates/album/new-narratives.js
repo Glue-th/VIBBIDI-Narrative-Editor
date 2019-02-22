@@ -5,7 +5,9 @@
 /* eslint-disable comma-dangle */
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
-import { Button, Card, Col, Form, Input, Row } from 'antd';
+import {
+    Button, Card, Col, Form, Input, Row
+} from 'antd';
 import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 // import draftToMarkdown from 'draftjs-to-markdown';
 import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
@@ -17,10 +19,10 @@ import styled from 'styled-components';
 import {
     createNarrative,
     getAlbumNarratives,
+    getDatasourceByYoutubeUrl,
     getNarrativeDetail,
     setNarrativeTags,
     updateNarrative,
-    getDatasourceByYoutubeUrl,
 } from '../../../api/index';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
 import AlbumsDetailTable from './albums-details-table';
@@ -70,16 +72,16 @@ class NewNarratives extends React.Component {
     }
 
     componentDidMount = () => {
-        getDatasourceByYoutubeUrl('https://www.youtube.com/watch?v=nfWlot6h_JM')
-            .then(res => res.data.data.findByYoutubeUrl)
-            .then(track => {
-                console.log(
-                    'https://www.youtube.com/watch?v=nfWlot6h_JM',
-                    '==>',
-                    track.datasourceId
-                );
-            })
-            .catch(e => console.log(e.message));
+        // getDatasourceByYoutubeUrl('https://www.youtube.com/watch?v=nfWlot6h_JM')
+        //     .then(res => res.data.data.findByYoutubeUrl)
+        //     .then(track => {
+        //         console.log(
+        //             'https://www.youtube.com/watch?v=nfWlot6h_JM',
+        //             '==>',
+        //             track.datasourceId,
+        //         );
+        //     })
+        //     .catch(e => console.log(e.message));
     };
 
     onAlbumClicked = album => {
@@ -109,20 +111,17 @@ class NewNarratives extends React.Component {
                     narrativeDetail.content_json &&
                     narrativeDetail.content_json.sections
                 ) {
-                    for (
-                        let i = 0;
-                        i < narrativeDetail.content_json.sections.length;
-                        i += 1
-                    ) {
+                    for (let i = 0; i < narrativeDetail.content_json.sections.length; i += 1) {
                         const rawData = mdToDraftjs(
-                            narrativeDetail.content_json.sections[i].content
+                            narrativeDetail.content_json.sections[i].content,
                         );
-                        const nodes = narrativeDetail.content_json.sections[
-                            i
-                        ].content.split('\r\n');
+                        const nodes = narrativeDetail.content_json.sections[i].content
+                            .split('[')
+                            .slice(1);
                         const content = [];
                         nodes.forEach(node => {
                             // Link (Text + URL)
+                            node = `[${node}`;
                             if (node.indexOf('[') === 0) {
                                 const matches = node.match(/\[(.*)\]\((.*)\)/);
                                 content.push({
@@ -132,10 +131,9 @@ class NewNarratives extends React.Component {
                             }
                         });
                         keywords = keywords.concat(content);
+
                         const contentState = convertFromRaw(rawData);
-                        const newEditorState = EditorState.createWithContent(
-                            contentState
-                        );
+                        const newEditorState = EditorState.createWithContent(contentState);
                         editorState[`section${i}`] = newEditorState;
                     }
                 }
@@ -184,12 +182,10 @@ class NewNarratives extends React.Component {
                         selectedAlbum.id, // album_id
                         values.author || '297513575490577', // user_id
                         values.main_title, // title
-                        { sections } // content_json
+                        { sections }, // content_json
                     )
                         .then(res => res.data.narrative.id)
-                        .then(narrativeId =>
-                            setNarrativeTags(narrativeId, hashtag)
-                        )
+                        .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
                         .then(() => {
                             this.handleCancel();
                             getAlbumNarratives(selectedAlbum.id)
@@ -209,11 +205,7 @@ class NewNarratives extends React.Component {
     handleSave = e => {
         e.preventDefault();
         console.log('update');
-        const {
-            selectedNarrativeUuid,
-            selectedAlbum,
-            narrativeDetail,
-        } = this.state;
+        const { selectedNarrativeUuid, selectedAlbum, narrativeDetail } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 console.log('Received values of form: ', values);
@@ -222,28 +214,21 @@ class NewNarratives extends React.Component {
                     .map(item => item.trim())
                     .slice(1);
 
-                if (
-                    selectedNarrativeUuid &&
-                    narrativeDetail &&
-                    narrativeDetail.content_json
-                ) {
+                if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
                     for (let index = 1; index <= 3; index += 1) {
                         narrativeDetail.content_json.sections[index].title =
                             values[`sub-tittle-${index}`];
-                        narrativeDetail.content_json.sections[
-                            index
-                        ].datasource_id = values[`datasourceID_${index}`];
+                        narrativeDetail.content_json.sections[index].datasource_id =
+                            values[`datasourceID_${index}`];
                     }
                     updateNarrative(
                         selectedNarrativeUuid, // narrative_id
                         selectedAlbum.id, // album_id
                         values.author || '297513575490577', // user_id
                         values.main_title, // title
-                        narrativeDetail.content_json // content_json
+                        narrativeDetail.content_json, // content_json
                     )
-                        .then(() =>
-                            setNarrativeTags(selectedNarrativeUuid, hashtag)
-                        )
+                        .then(() => setNarrativeTags(selectedNarrativeUuid, hashtag))
                         .then(() => {
                             this.handleCancel();
                             getAlbumNarratives(selectedAlbum.id)
@@ -272,6 +257,7 @@ class NewNarratives extends React.Component {
                 section3: createEditorState(),
             },
             hashTag: '',
+            keywords: [],
         });
         this.props.form.resetFields();
     };
@@ -282,14 +268,30 @@ class NewNarratives extends React.Component {
         }));
     };
 
+    handleFindDataSource = (fieldLink, fieldDatasource) => () => {
+        const link = this.props.form.getFieldValue(fieldLink);
+        if (link) {
+            getDatasourceByYoutubeUrl(link)
+                .then(res => res.data.data.findByYoutubeUrl)
+                .then(track => {
+                    console.log(track.datasourceId);
+                    this.props.form.setFieldsValue({
+                        [fieldDatasource]: track.datasourceId,
+                    });
+                })
+                .catch(e => {
+                    console.log(e.message);
+                    this.props.form.setFieldsValue({
+                        [fieldDatasource]: null,
+                    });
+                });
+        }
+    };
+
     render() {
         const { getFieldDecorator } = this.props.form;
         const {
-            narrativeDetail,
-            numberSubSection,
-            editorState,
-            hashTag,
-            keywords,
+            narrativeDetail, numberSubSection, editorState, hashTag, keywords
         } = this.state;
         let start = 1;
         if (
@@ -305,10 +307,7 @@ class NewNarratives extends React.Component {
                 <div key={index}>
                     <Row gutter={16} style={{ paddingTop: '1em' }}>
                         <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                            <span
-                                id={`lblSub-tittle-new-${index}`}
-                                className="label"
-                            >
+                            <span id={`lblSub-tittle-new-${index}`} className="label">
                                 {`Sub-tittle ${index}`}
                             </span>
                         </Col>
@@ -319,7 +318,7 @@ class NewNarratives extends React.Component {
                                         id={`input_sub-tittle-new-${index}`}
                                         placeholder="Sub-tittle"
                                         style={{ width: '100%' }}
-                                    />
+                                    />,
                                 )}
                             </FormItem>
                         </Col>
@@ -330,22 +329,31 @@ class NewNarratives extends React.Component {
                                 Video URL
                             </span>
                         </Col>
-                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                        <Col xs={7} sm={7} md={7} lg={7} xl={7}>
                             <FormItem>
                                 {getFieldDecorator(`video_url_new_${index}`)(
                                     <Input
                                         id={`input_video_url_new_${index}`}
                                         placeholder=" Video URL"
                                         style={{ width: '100%' }}
-                                    />
+                                    />,
                                 )}
                             </FormItem>
                         </Col>
-                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                            <span
+                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
+                            <Button
+                                type="danger"
                                 id={`lblDatasourceID_${index}`}
-                                className="label"
+                                onClick={this.handleFindDataSource(
+                                    `video_url_new_${index}`,
+                                    `datasourceID_new_${index}`,
+                                )}
                             >
+                                Find
+                            </Button>
+                        </Col>
+                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                            <span id={`lblDatasourceID_${index}`} className="label">
                                 Datasource ID
                             </span>
                         </Col>
@@ -356,7 +364,7 @@ class NewNarratives extends React.Component {
                                         id={`input_datasourceID_new_${index}`}
                                         placeholder="Datasource ID"
                                         style={{ width: '100%' }}
-                                    />
+                                    />,
                                 )}
                             </FormItem>
                         </Col>
@@ -366,18 +374,14 @@ class NewNarratives extends React.Component {
                         <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                             <Card bordered>
                                 <Editor
-                                    editorState={
-                                        this.state.editorState[
-                                            `section${index}`
-                                        ]
-                                    }
+                                    editorState={this.state.editorState[`section${index}`]}
                                     onChange={this.onChangeEditor(index)}
                                     toolbarConfig={toolbarConfig}
                                 />
                             </Card>
                         </Col>
                     </Row>
-                </div>
+                </div>,
             );
         }
 
@@ -386,17 +390,13 @@ class NewNarratives extends React.Component {
                 <Title>Create Album Narratives</Title>
                 <div className="new-template">
                     {/* Search Album */}
-                    <SubTitle
-                        style={{ paddingTop: '1em', paddingBottom: '1em' }}
-                    >
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
                         1. Search Album
                     </SubTitle>
                     <AlbumSearch searchCallback={this.onSearchAlbums} />
 
                     {/* Search result */}
-                    <SubTitle
-                        style={{ paddingTop: '1em', paddingBottom: '1em' }}
-                    >
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
                         2. Select an Album
                     </SubTitle>
                     {(this.state.albums && this.state.albums.length && (
@@ -411,18 +411,14 @@ class NewNarratives extends React.Component {
                         'no album'}
 
                     {/* Search Narratives */}
-                    <SubTitle
-                        style={{ paddingTop: '1em', paddingBottom: '1em' }}
-                    >
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
                         3. Select a Narrative
                     </SubTitle>
                     {(this.state.narratives && this.state.narratives.length && (
                         <Row gutter={16}>
                             <NarrativesDetailTable
                                 narratives={this.state.narratives}
-                                selected_narrative_uuid={
-                                    this.state.selectedNarrativeUuid
-                                }
+                                selected_narrative_uuid={this.state.selectedNarrativeUuid}
                                 onNarrativeClicked={this.onNarrativeClicked}
                             />
                         </Row>
@@ -430,11 +426,9 @@ class NewNarratives extends React.Component {
                         'no Narrative'}
 
                     {/* Form submit */}
-                    <SubTitle
-                        style={{ paddingTop: '1em', paddingBottom: '1em' }}
-                    >
-                        {`4. Update or Create narrative for album name:${(this
-                            .state.selectedAlbum &&
+                    <SubTitle style={{ paddingTop: '1em', paddingBottom: '1em' }}>
+                        {`4. Update or Create narrative for album name:${(this.state
+                            .selectedAlbum &&
                             this.state.selectedAlbum.album_name) ||
                             ''}, artist name:${(this.state.selectedAlbum &&
                             this.state.selectedAlbum.artist_name) ||
@@ -452,15 +446,13 @@ class NewNarratives extends React.Component {
                                     <FormItem>
                                         {getFieldDecorator('author', {
                                             initialValue:
-                                                (narrativeDetail &&
-                                                    narrativeDetail.user_id) ||
-                                                '',
+                                                (narrativeDetail && narrativeDetail.user_id) || '',
                                         })(
                                             <Input
                                                 id="input_author"
                                                 placeholder="author"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -475,15 +467,13 @@ class NewNarratives extends React.Component {
                                     <FormItem>
                                         {getFieldDecorator('main_title', {
                                             initialValue:
-                                                (narrativeDetail &&
-                                                    narrativeDetail.title) ||
-                                                '',
+                                                (narrativeDetail && narrativeDetail.title) || '',
                                         })(
                                             <Input
                                                 id="input_main_title"
                                                 placeholder="title of narrative"
                                                 style={{ width: '100%' }}
-                                            />
+                                            />,
                                         )}
                                     </FormItem>
                                 </Col>
@@ -507,187 +497,152 @@ class NewNarratives extends React.Component {
                                 {narrativeDetail &&
                                     narrativeDetail.content_json &&
                                     narrativeDetail.content_json.sections &&
-                                    narrativeDetail.content_json.sections
-                                        .length > 1 &&
-                                    narrativeDetail.content_json.sections.map(
-                                        (section, index) => {
-                                            if (index > 0) {
-                                                return (
-                                                    <div key={index}>
-                                                        <Row
-                                                            gutter={16}
-                                                            style={{
-                                                                paddingTop:
-                                                                    '1em',
-                                                            }}
+                                    narrativeDetail.content_json.sections.length > 1 &&
+                                    narrativeDetail.content_json.sections.map((section, index) => {
+                                        if (index > 0) {
+                                            return (
+                                                <div key={index}>
+                                                    <Row
+                                                        gutter={16}
+                                                        style={{
+                                                            paddingTop: '1em',
+                                                        }}
+                                                    >
+                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                                            <span
+                                                                id={`lblSub-tittle-${index}`}
+                                                                className="label"
+                                                            >
+                                                                {`Sub-tittle ${index}`}
+                                                            </span>
+                                                        </Col>
+                                                        <Col
+                                                            xs={20}
+                                                            sm={20}
+                                                            md={20}
+                                                            lg={20}
+                                                            xl={20}
                                                         >
-                                                            <Col
-                                                                xs={3}
-                                                                sm={3}
-                                                                md={3}
-                                                                lg={3}
-                                                                xl={3}
+                                                            <FormItem>
+                                                                {getFieldDecorator(
+                                                                    `sub-tittle-${index}`,
+                                                                    {
+                                                                        initialValue:
+                                                                            section.title || '',
+                                                                    },
+                                                                )(
+                                                                    <Input
+                                                                        id={`input_sub-tittle-${index}`}
+                                                                        placeholder="Sub-tittle"
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
+                                                                    />,
+                                                                )}
+                                                            </FormItem>
+                                                        </Col>
+                                                    </Row>
+                                                    <Row gutter={16}>
+                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                                            <span
+                                                                id={`lblVideoURL_${index}`}
+                                                                className="label"
                                                             >
-                                                                <span
-                                                                    id={`lblSub-tittle-${index}`}
-                                                                    className="label"
-                                                                >
-                                                                    {`Sub-tittle ${index}`}
-                                                                </span>
-                                                            </Col>
-                                                            <Col
-                                                                xs={20}
-                                                                sm={20}
-                                                                md={20}
-                                                                lg={20}
-                                                                xl={20}
+                                                                Video URL
+                                                            </span>
+                                                        </Col>
+                                                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                                                            <FormItem>
+                                                                {getFieldDecorator(
+                                                                    `video_url_${index}`,
+                                                                    {
+                                                                        initialValue:
+                                                                            section.datasource_id ||
+                                                                            '',
+                                                                    },
+                                                                )(
+                                                                    <Input
+                                                                        id={`input_video_url_${index +
+                                                                            1}`}
+                                                                        placeholder=" Video URL"
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
+                                                                    />,
+                                                                )}
+                                                            </FormItem>
+                                                        </Col>
+                                                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
+                                                            <Button
+                                                                type="danger"
+                                                                id={`lblDatasourceID_${index}`}
+                                                                onClick={this.handleFindDataSource(
+                                                                    `video_url_${index}`,
+                                                                    `datasourceID_${index}`,
+                                                                )}
                                                             >
-                                                                <FormItem>
-                                                                    {getFieldDecorator(
-                                                                        `sub-tittle-${index}`,
-                                                                        {
-                                                                            initialValue:
-                                                                                section.title ||
-                                                                                '',
-                                                                        }
-                                                                    )(
-                                                                        <Input
-                                                                            id={`input_sub-tittle-${index}`}
-                                                                            placeholder="Sub-tittle"
-                                                                            style={{
-                                                                                width:
-                                                                                    '100%',
-                                                                            }}
-                                                                        />
+                                                                Find
+                                                            </Button>
+                                                        </Col>
+                                                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
+                                                            <span
+                                                                id={`lblDatasourceID_${index}`}
+                                                                className="label"
+                                                            >
+                                                                Datasource ID
+                                                            </span>
+                                                        </Col>
+                                                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
+                                                            <FormItem>
+                                                                {getFieldDecorator(
+                                                                    `datasourceID_${index}`,
+                                                                    {
+                                                                        initialValue:
+                                                                            section.datasource_id ||
+                                                                            '',
+                                                                    },
+                                                                )(
+                                                                    <Input
+                                                                        id={`input_datasourceID_${index}`}
+                                                                        placeholder="Datasource ID"
+                                                                        style={{
+                                                                            width: '100%',
+                                                                        }}
+                                                                    />,
+                                                                )}
+                                                            </FormItem>
+                                                        </Col>
+                                                    </Row>
+                                                    <Row gutter={16}>
+                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3} />
+                                                        <Col
+                                                            xs={20}
+                                                            sm={20}
+                                                            md={20}
+                                                            lg={20}
+                                                            xl={20}
+                                                        >
+                                                            <Card bordered>
+                                                                <Editor
+                                                                    // ref={this.refsEditor}
+                                                                    editorState={
+                                                                        editorState[
+                                                                            `section${index}`
+                                                                        ]
+                                                                    }
+                                                                    onChange={this.onChangeEditor(
+                                                                        index,
                                                                     )}
-                                                                </FormItem>
-                                                            </Col>
-                                                        </Row>
-                                                        <Row gutter={16}>
-                                                            <Col
-                                                                xs={3}
-                                                                sm={3}
-                                                                md={3}
-                                                                lg={3}
-                                                                xl={3}
-                                                            >
-                                                                <span
-                                                                    id={`lblVideoURL_${index}`}
-                                                                    className="label"
-                                                                >
-                                                                    Video URL
-                                                                </span>
-                                                            </Col>
-                                                            <Col
-                                                                xs={8}
-                                                                sm={8}
-                                                                md={8}
-                                                                lg={8}
-                                                                xl={8}
-                                                            >
-                                                                <FormItem>
-                                                                    {getFieldDecorator(
-                                                                        `video_url_${index}`,
-                                                                        {
-                                                                            initialValue:
-                                                                                section.datasource_id ||
-                                                                                '',
-                                                                        }
-                                                                    )(
-                                                                        <Input
-                                                                            id={`input_video_url_${index +
-                                                                                1}`}
-                                                                            placeholder=" Video URL"
-                                                                            style={{
-                                                                                width:
-                                                                                    '100%',
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                </FormItem>
-                                                            </Col>
-                                                            <Col
-                                                                xs={3}
-                                                                sm={3}
-                                                                md={3}
-                                                                lg={3}
-                                                                xl={3}
-                                                            >
-                                                                <span
-                                                                    id={`lblDatasourceID_${index}`}
-                                                                    className="label"
-                                                                >
-                                                                    Datasource
-                                                                    ID
-                                                                </span>
-                                                            </Col>
-                                                            <Col
-                                                                xs={8}
-                                                                sm={8}
-                                                                md={8}
-                                                                lg={8}
-                                                                xl={8}
-                                                            >
-                                                                <FormItem>
-                                                                    {getFieldDecorator(
-                                                                        `datasourceID_${index}`,
-                                                                        {
-                                                                            initialValue:
-                                                                                section.datasource_id ||
-                                                                                '',
-                                                                        }
-                                                                    )(
-                                                                        <Input
-                                                                            id={`input_datasourceID_${index}`}
-                                                                            placeholder="Datasource ID"
-                                                                            style={{
-                                                                                width:
-                                                                                    '100%',
-                                                                            }}
-                                                                        />
-                                                                    )}
-                                                                </FormItem>
-                                                            </Col>
-                                                        </Row>
-                                                        <Row gutter={16}>
-                                                            <Col
-                                                                xs={3}
-                                                                sm={3}
-                                                                md={3}
-                                                                lg={3}
-                                                                xl={3}
-                                                            />
-                                                            <Col
-                                                                xs={20}
-                                                                sm={20}
-                                                                md={20}
-                                                                lg={20}
-                                                                xl={20}
-                                                            >
-                                                                <Card bordered>
-                                                                    <Editor
-                                                                        // ref={this.refsEditor}
-                                                                        editorState={
-                                                                            editorState[
-                                                                                `section${index}`
-                                                                            ]
-                                                                        }
-                                                                        onChange={this.onChangeEditor(
-                                                                            index
-                                                                        )}
-                                                                        toolbarConfig={
-                                                                            toolbarConfig
-                                                                        }
-                                                                    />
-                                                                </Card>
-                                                            </Col>
-                                                        </Row>
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
+                                                                    toolbarConfig={toolbarConfig}
+                                                                />
+                                                            </Card>
+                                                        </Col>
+                                                    </Row>
+                                                </div>
+                                            );
                                         }
-                                    )}
+                                        return null;
+                                    })}
                                 {subSections}
                             </Card>
                             {/* <Row>
@@ -700,13 +655,7 @@ class NewNarratives extends React.Component {
                             <Row>
                                 <Col xs={24}>
                                     <Card bordered={false}>
-                                        <FormItem
-                                            label={
-                                                <span id="hash-tags">
-                                                    Hashtags
-                                                </span>
-                                            }
-                                        >
+                                        <FormItem label={<span id="hash-tags">Hashtags</span>}>
                                             {getFieldDecorator('hashTags', {
                                                 initialValue: hashTag || '',
                                             })(
@@ -715,7 +664,7 @@ class NewNarratives extends React.Component {
                                                     autosize={{
                                                         minRows: 4,
                                                     }}
-                                                />
+                                                />,
                                             )}
                                         </FormItem>
                                     </Card>
@@ -729,11 +678,8 @@ class NewNarratives extends React.Component {
                                 </Col>
                             </Row>
                             <Row>
-                                <Col span={24} style={{ textAlign: 'right' }}>
-                                    <Button
-                                        id="btnCancel"
-                                        onClick={this.handleCancel}
-                                    >
+                                <Col span={24} style={{ textAlign: 'right', paddingTop: '1em' }}>
+                                    <Button id="btnCancel" onClick={this.handleCancel}>
                                         Cancel
                                     </Button>
                                     {narrativeDetail && (
@@ -746,11 +692,7 @@ class NewNarratives extends React.Component {
                                         </Button>
                                     )}
                                     {!narrativeDetail && (
-                                        <Button
-                                            type="primary"
-                                            htmlType="submit"
-                                            id="btnSubmit"
-                                        >
+                                        <Button type="primary" htmlType="submit" id="btnSubmit">
                                             Finish
                                         </Button>
                                     )}

@@ -35,9 +35,9 @@ class KeywordTable extends React.Component {
                 dataIndex: '',
                 key: guid(),
                 align: 'center',
-                // render: (text, template) => ({
-                //     children: template.artist_name,
-                // }),
+                render: (text, template) => ({
+                    children: template.category,
+                }),
             },
             {
                 title: 'URL',
@@ -50,9 +50,9 @@ class KeywordTable extends React.Component {
             },
             {
                 title: 'Action',
-                dataIndex: 'gender',
+                dataIndex: '',
                 key: guid(),
-                fixed: 'right',
+                // fixed: 'right',
                 align: 'center',
                 render: (text, template) => (
                     <div>
