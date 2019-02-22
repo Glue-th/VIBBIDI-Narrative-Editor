@@ -8,7 +8,7 @@
 import {
     Button, Card, Col, Form, Input, Row
 } from 'antd';
-import { convertToRaw, convertFromRaw, EditorState, ContentState } from 'draft-js';
+import { convertToRaw, convertFromRaw, EditorState } from 'draft-js';
 // import draftToMarkdown from 'draftjs-to-markdown';
 import { mdToDraftjs, draftjsToMd } from 'draftjs-md-converter';
 import { createEditorState, Editor } from 'medium-draft';

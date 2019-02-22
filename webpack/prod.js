@@ -1,6 +1,6 @@
 import baseConfig from './base';
 
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+// const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
@@ -21,14 +21,14 @@ export default {
     plugins: [
         ...baseConfig.plugins,
         new CleanWebpackPlugin(['dist']),
-        new UglifyJsPlugin({
-            parallel: true,
-            uglifyOptions: {
-                compress: {
-                    drop_console: true,
-                },
-            },
-        }),
+        // new UglifyJsPlugin({
+        //     parallel: true,
+        //     uglifyOptions: {
+        //         compress: {
+        //             drop_console: true,
+        //         },
+        //     },
+        // }),
         new MiniCssExtractPlugin(),
     ],
 };
