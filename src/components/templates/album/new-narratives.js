@@ -6,7 +6,7 @@
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
 import {
-    Button, Card, Col, Form, Input, Row
+    Button, Card, Col, Form, Input, Row, Spin
 } from 'antd';
 import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 // import draftToMarkdown from 'draftjs-to-markdown';
@@ -54,6 +54,7 @@ class NewNarratives extends React.Component {
             hashTag: '',
             contents: [],
             keywords: [],
+            loading: false,
         };
         this.onChangeEditor = index => editor => {
             const { editorState, narrativeDetail, contents } = this.state;
@@ -86,13 +87,16 @@ class NewNarratives extends React.Component {
 
     onAlbumClicked = album => {
         this.handleCancel();
-        this.setState({ selectedAlbum: album, narratives: [] });
+        this.setState({ selectedAlbum: album, narratives: [], loading: true });
         getAlbumNarratives(album.id)
             .then(res => res.data.narratives)
             .then(narratives => {
-                this.setState({ narratives });
+                this.setState({ narratives, loading: false });
             })
-            .catch(e => console.log(e.message));
+            .catch(e => {
+                console.log(e.message);
+                this.setState({ loading: false });
+            });
     };
 
     onNarrativeClicked = narrativeUuid => {
@@ -101,7 +105,7 @@ class NewNarratives extends React.Component {
             return;
         }
         const { editorState } = this.state;
-        this.setState({ selectedNarrativeUuid: narrativeUuid });
+        this.setState({ selectedNarrativeUuid: narrativeUuid, loading: true });
         let keywords = [];
         getNarrativeDetail(narrativeUuid)
             .then(res => res.data)
@@ -112,29 +116,32 @@ class NewNarratives extends React.Component {
                     narrativeDetail.content_json.sections
                 ) {
                     for (let i = 0; i < narrativeDetail.content_json.sections.length; i += 1) {
-                        const rawData = mdToDraftjs(
-                            narrativeDetail.content_json.sections[i].content,
-                        );
-                        const nodes = narrativeDetail.content_json.sections[i].content
-                            .split('[')
-                            .slice(1);
-                        const content = [];
-                        nodes.forEach(node => {
-                            // Link (Text + URL)
-                            node = `[${node}`;
-                            if (node.indexOf('[') === 0) {
-                                const matches = node.match(/\[(.*)\]\((.*)\)/);
-                                content.push({
-                                    text: matches[1],
-                                    url: matches[2],
-                                });
-                            }
-                        });
-                        keywords = keywords.concat(content);
-
-                        const contentState = convertFromRaw(rawData);
-                        const newEditorState = EditorState.createWithContent(contentState);
-                        editorState[`section${i}`] = newEditorState;
+                        if (narrativeDetail.content_json.sections[i].content) {
+                            const nodes = narrativeDetail.content_json.sections[i].content
+                                .split('[')
+                                .slice(1);
+                            const content = [];
+                            nodes.forEach(node => {
+                                // Link (Text + URL)
+                                node = `[${node}`;
+                                if (node.indexOf('[') === 0) {
+                                    const matches = node.match(/\[(.*)\]\((.*)\)/);
+                                    content.push({
+                                        text: matches[1],
+                                        url: matches[2],
+                                    });
+                                }
+                            });
+                            keywords = keywords.concat(content);
+                            const rawData = mdToDraftjs(
+                                narrativeDetail.content_json.sections[i].content,
+                            );
+                            const contentState = convertFromRaw(rawData);
+                            const newEditorState = EditorState.createWithContent(contentState);
+                            editorState[`section${i}`] = newEditorState;
+                        } else {
+                            editorState[`section${i}`] = createEditorState();
+                        }
                     }
                 }
                 let hashTag = '';
@@ -148,21 +155,26 @@ class NewNarratives extends React.Component {
                     editorState,
                     hashTag,
                     keywords,
+                    loading: false,
                 });
             })
-            .catch(e => console.log(e.message));
+            .catch(e => {
+                console.log(e.message);
+                this.setState({ loading: false });
+            });
     };
 
-    onSearchAlbums = albums => {
-        this.setState({ albums: albums || [] });
+    onSearchAlbums = (albums, loading) => {
+        this.setState({ albums: albums || [], loading });
     };
 
     handleCreate = e => {
         e.preventDefault();
         const { selectedAlbum, contents } = this.state;
-        if (selectedAlbum && contents.length > 0) {
-            this.props.form.validateFields((err, values) => {
-                if (!err) {
+        this.props.form.validateFields((err, values) => {
+            if (!err) {
+                if (selectedAlbum && contents.length > 0) {
+                    this.setState({ loading: true });
                     console.log('Received values of form: ', values);
                     const sections = [];
                     sections.push({ content: contents[0] });
@@ -180,13 +192,14 @@ class NewNarratives extends React.Component {
                         .slice(1);
                     createNarrative(
                         selectedAlbum.id, // album_id
-                        values.author || '297513575490577', // user_id
+                        values.author, // user_id
                         values.main_title, // title
                         { sections }, // content_json
                     )
                         .then(res => res.data.narrative.id)
                         .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
                         .then(() => {
+                            this.setState({ loading: false });
                             this.handleCancel();
                             getAlbumNarratives(selectedAlbum.id)
                                 .then(res => res.data.narratives)
@@ -196,10 +209,14 @@ class NewNarratives extends React.Component {
                                 .catch(e => console.log(e.message));
                             alert('create narrative success');
                         })
-                        .catch(err => console.log('update fail', err.message));
+                        .catch(err => {
+                            console.log('update fail', err.message);
+                            this.setState({ loading: false });
+                        });
                 }
-            });
-        }
+                this.setState({ loading: false });
+            }
+        });
     };
 
     handleSave = e => {
@@ -208,6 +225,7 @@ class NewNarratives extends React.Component {
         const { selectedNarrativeUuid, selectedAlbum, narrativeDetail } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
+                this.setState({ loading: true });
                 console.log('Received values of form: ', values);
                 const hashtag = values.hashTags
                     .split('#')
@@ -224,12 +242,13 @@ class NewNarratives extends React.Component {
                     updateNarrative(
                         selectedNarrativeUuid, // narrative_id
                         selectedAlbum.id, // album_id
-                        values.author || '297513575490577', // user_id
+                        values.author, // user_id
                         values.main_title, // title
                         narrativeDetail.content_json, // content_json
                     )
                         .then(() => setNarrativeTags(selectedNarrativeUuid, hashtag))
                         .then(() => {
+                            this.setState({ loading: false });
                             this.handleCancel();
                             getAlbumNarratives(selectedAlbum.id)
                                 .then(res => res.data.narratives)
@@ -239,8 +258,9 @@ class NewNarratives extends React.Component {
                                 .catch(e => console.log(e.message));
                             alert('update narrative success');
                         })
-                        .catch(err => console.log('update fail', err.message));
+                        .catch(err => { console.log('update fail', err.message); this.setState({ loading: false }); });
                 }
+                this.setState({ loading: false });
             }
         });
     };
@@ -271,6 +291,7 @@ class NewNarratives extends React.Component {
     handleFindDataSource = (fieldLink, fieldDatasource) => () => {
         const link = this.props.form.getFieldValue(fieldLink);
         if (link) {
+            this.setState({ loading: true });
             getDatasourceByYoutubeUrl(link)
                 .then(res => res.data.data.findByYoutubeUrl)
                 .then(track => {
@@ -278,12 +299,14 @@ class NewNarratives extends React.Component {
                     this.props.form.setFieldsValue({
                         [fieldDatasource]: track.datasourceId,
                     });
+                    this.setState({ loading: false });
                 })
                 .catch(e => {
                     console.log(e.message);
                     this.props.form.setFieldsValue({
                         [fieldDatasource]: null,
                     });
+                    this.setState({ loading: false });
                 });
         }
     };
@@ -387,6 +410,7 @@ class NewNarratives extends React.Component {
 
         return (
             <Container>
+                {this.state.loading && <Spin />}
                 <Title>Create Album Narratives</Title>
                 <div className="new-template">
                     {/* Search Album */}
@@ -434,7 +458,7 @@ class NewNarratives extends React.Component {
                             this.state.selectedAlbum.artist_name) ||
                             ''}`}
                     </SubTitle>
-                    {(this.state.selectedAlbum && (
+                    {this.state.selectedAlbum && (
                         <Form onSubmit={this.handleCreate} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3}>
@@ -446,10 +470,15 @@ class NewNarratives extends React.Component {
                                     <FormItem>
                                         {getFieldDecorator('author', {
                                             initialValue:
-                                                (narrativeDetail && narrativeDetail.user_id) || '',
+                                                narrativeDetail && narrativeDetail.user_id,
+                                            rules: [
+                                                {
+                                                    required: true,
+                                                    message: 'Please input author',
+                                                },
+                                            ],
                                         })(
                                             <Input
-                                                id="input_author"
                                                 placeholder="author"
                                                 style={{ width: '100%' }}
                                             />,
@@ -466,8 +495,13 @@ class NewNarratives extends React.Component {
                                 <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                                     <FormItem>
                                         {getFieldDecorator('main_title', {
-                                            initialValue:
-                                                (narrativeDetail && narrativeDetail.title) || '',
+                                            initialValue: narrativeDetail && narrativeDetail.title,
+                                            rules: [
+                                                {
+                                                    required: true,
+                                                    message: 'Please input MAIN TITTLE',
+                                                },
+                                            ],
                                         })(
                                             <Input
                                                 id="input_main_title"
@@ -699,8 +733,7 @@ class NewNarratives extends React.Component {
                                 </Col>
                             </Row>
                         </Form>
-                    )) ||
-                        null}
+                    )}
                 </div>
             </Container>
         );
@@ -712,6 +745,24 @@ const Container = styled.div`
     flex-direction: column;
     padding: 1em 0 0 1em;
     color: #000;
+    .ant-spin-spinning {
+        position: fixed;
+        display: block;
+        width: 100%;
+        height: 100%;
+        top: 0px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 2;
+        cursor: pointer;
+    }
+    .ant-spin-dot-spin {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+    }
     .new-template {
         .label {
             float: right;
