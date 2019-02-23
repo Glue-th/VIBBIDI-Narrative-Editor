@@ -17,7 +17,7 @@ class AlbumSearch extends React.Component {
         e.preventDefault();
         console.log('search');
         if (this.props.searchCallback) {
-            this.props.searchCallback();
+            this.props.searchCallback([], true);
         }
         this.props.form.validateFields((err, values) => {
             if (!err) {
@@ -31,7 +31,12 @@ class AlbumSearch extends React.Component {
                             this.props.searchCallback(albums);
                         }
                     })
-                    .catch(e => console.log(e.meesage));
+                    .catch((e) => {
+                        console.log(e.meesage);
+                        if (this.props.searchCallback) {
+                            this.props.searchCallback([], false);
+                        }
+                    });
             }
         });
     }
