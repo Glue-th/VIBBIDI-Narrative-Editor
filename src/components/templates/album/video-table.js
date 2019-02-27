@@ -18,34 +18,16 @@ import React from 'react';
 import styled from 'styled-components';
 import { guid } from '../../../util/utils';
 
-class KeywordTable extends React.Component {
+class VideoDataTable extends React.Component {
     render() {
         const columns = [
             {
-                title: 'Keyword',
-                dataIndex: 'keyword',
+                title: 'Youtube URL',
+                dataIndex: 'uri',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    children: template.keyword,
-                }),
-            },
-            {
-                title: 'Category',
-                dataIndex: 'keyword',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    children: template.keyword,
-                }),
-            },
-            {
-                title: 'URL',
-                dataIndex: 'link',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    children: template.link,
+                    children: template.uri,
                 }),
             },
             {
@@ -57,17 +39,24 @@ class KeywordTable extends React.Component {
                 render: (text, template) => (
                     <div>
                         <Icon type="eye" />
-                        <Icon type="edit" theme="filled" />
-                        <Icon type="plus" />
                     </div>
                 ),
+            },
+            {
+                title: 'Datasource Id',
+                dataIndex: 'datasourceId',
+                key: guid(),
+                align: 'center',
+                render: (text, template) => ({
+                    children: template.datasourceId,
+                }),
             },
         ];
         return (
             <Container>
                 <Table
                     columns={columns}
-                    dataSource={this.props.keywords}
+                    dataSource={this.props.videoDatas}
                     bordered
                     size="small"
                     // pagination={pagination}
@@ -90,4 +79,4 @@ const Container = styled.div`
         /* width: 100px !important; */
     }
 `;
-export default KeywordTable;
+export default VideoDataTable;
