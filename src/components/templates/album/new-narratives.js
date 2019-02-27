@@ -116,7 +116,7 @@ class NewNarratives extends React.Component {
                 //         rawData.entityMap[key].type = 'embed';
                 //     }
                 // });
-                // console.log(JSON.stringify(rawData));
+                console.log(JSON.stringify(convertFromRaw(narrativeDetail.content_json)));
                 // const newEditorState = EditorState.createWithContent(contentState);
                 // this.onChange(newEditorState);
                 this.onChange(
