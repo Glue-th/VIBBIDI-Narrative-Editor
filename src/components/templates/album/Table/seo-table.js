@@ -1,21 +1,41 @@
 import { Icon, Table } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import { guid } from '../../../util/utils';
-import { generateDataReport } from './test';
+import { guid } from '../../../../util/utils';
+import { generateDataSeo } from '../test';
 
 class SeoTable extends React.Component {
     render() {
         const columns = [
             {
-                title: 'UUID Album',
-                dataIndex: 'UUID',
+                title: 'Narrative ID',
+                dataIndex: 'id',
                 key: guid(),
                 fixed: 'left',
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_UUID_${template.UUID}` },
+                    props: { id: `tbl_id_${template.id}` },
+                    children: template.id,
+                }),
+            },
+            {
+                title: 'UUID Album',
+                dataIndex: 'UUID',
+                key: guid(),
+                align: 'center',
+                render: (text, template) => ({
+                    props: { id: `tbl_UUID_${template.id}` },
                     children: template.UUID,
+                }),
+            },
+            {
+                title: 'Album name',
+                dataIndex: 'album_name',
+                key: guid(),
+                align: 'center',
+                render: (text, template) => ({
+                    props: { id: `tbl_album_name_${template.id}` },
+                    children: template.album_name,
                 }),
             },
             {
@@ -29,33 +49,13 @@ class SeoTable extends React.Component {
                 }),
             },
             {
-                title: 'Attached URL',
+                title: 'URL',
                 dataIndex: 'attached_URL',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
                     props: { id: `tbl_attached_URL_${template.UUID}` },
                     children: template.attached_URL,
-                }),
-            },
-            {
-                title: 'content',
-                dataIndex: 'content',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    props: { id: `tbl_content_${template.UUID}` },
-                    children: template.content,
-                }),
-            },
-            {
-                title: 'Hashtag',
-                dataIndex: 'hashtag',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    props: { id: `tbl_hashtag_${template.UUID}` },
-                    children: template.hashtag,
                 }),
             },
             {
@@ -66,14 +66,13 @@ class SeoTable extends React.Component {
                 align: 'center',
                 render: (text, template) => (
                     <div id={`tbl_detail_${template.UUID}`}>
-                        <Icon id={`tbl_detail_${template.UUID}`} type="eye" />
                         <Icon id={`tbl_edit_${template.UUID}`} type="edit" theme="filled" />
-                        <Icon id={`tbl_plus_${template.UUID}`} type="plus" />
+                        <Icon id={`tbl_plus_${template.UUID}`} type="delete" />
                     </div>
                 ),
             },
         ];
-        const data = generateDataReport();
+        const data = generateDataSeo();
         return (
             <Container>
                 <Table

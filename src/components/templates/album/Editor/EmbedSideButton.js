@@ -1,6 +1,7 @@
 import { AtomicBlockUtils, EditorState } from 'draft-js';
 import React from 'react';
 import PropTypes from 'prop-types';
+import { getDatasourceByYoutubeUrl } from '../../../../api/index';
 
 class EmbedSideButton extends React.Component {
     static propTypes = {
@@ -24,11 +25,15 @@ class EmbedSideButton extends React.Component {
         this.addEmbedURL(url);
     }
 
-    addEmbedURL(url) {
+    async addEmbedURL(url) {
         let editorState = this.props.getEditorState();
         const content = editorState.getCurrentContent();
+        const res = await Promise.resolve(getDatasourceByYoutubeUrl(url));
+        const datasource = res.data.data.findByYoutubeUrl || null;
+        console.log(JSON.stringify(datasource));
         const contentWithEntity = content.createEntity('embed', 'IMMUTABLE', {
             url,
+            datasource,
         });
         const entityKey = contentWithEntity.getLastCreatedEntityKey();
         editorState = EditorState.push(editorState, contentWithEntity, 'create-entity');

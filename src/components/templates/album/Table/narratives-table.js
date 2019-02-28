@@ -1,14 +1,14 @@
 import { Icon, Table } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import { generateData } from './test';
-import { guid } from '../../../util/utils';
+import { guid } from '../../../../util/utils';
+import { generateData } from '../test';
 
 class NarrativesTable extends React.Component {
     render() {
         const columns = [
             {
-                title: 'ID',
+                title: 'Narrative ID',
                 dataIndex: 'id',
                 key: guid(),
                 fixed: 'left',
@@ -29,6 +29,16 @@ class NarrativesTable extends React.Component {
                 }),
             },
             {
+                title: 'Album name',
+                dataIndex: 'album_name',
+                key: guid(),
+                align: 'center',
+                render: (text, template) => ({
+                    props: { id: `tbl_album_name_${template.id}` },
+                    children: template.album_name,
+                }),
+            },
+            {
                 title: 'Main Title',
                 dataIndex: 'main_title',
                 key: guid(),
@@ -39,47 +49,7 @@ class NarrativesTable extends React.Component {
                 }),
             },
             {
-                title: 'Sub Title',
-                dataIndex: 'sub_title',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    props: { id: `tbl_sub_title_${template.id}` },
-                    children: template.sub_title,
-                }),
-            },
-            // {
-            //     title: 'content',
-            //     dataIndex: 'content',
-            //     key: guid(),
-            //     align: 'center',
-            //     render: (text, template) => ({
-            //         props: { id: `tbl_content_${template.id}` },
-            //         children: template.content,
-            //     }),
-            // },
-            {
-                title: 'Video Youtube link',
-                dataIndex: 'youtube_link',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    props: { id: `tbl_youtube_link_${template.id}` },
-                    children: template.youtube_link,
-                }),
-            },
-            {
-                title: 'Vibbidi single page',
-                dataIndex: 'single_page',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    props: { id: `tbl_single_page_${template.id}` },
-                    children: template.single_page,
-                }),
-            },
-            {
-                title: 'Owner',
+                title: 'Author',
                 dataIndex: 'owner',
                 key: guid(),
                 align: 'center',
@@ -99,16 +69,6 @@ class NarrativesTable extends React.Component {
                 }),
             },
             {
-                title: 'Comments',
-                dataIndex: 'comments',
-                key: guid(),
-                align: 'center',
-                render: (text, template) => ({
-                    props: { id: `tbl_comments_${template.id}` },
-                    children: template.comments,
-                }),
-            },
-            {
                 title: 'Action',
                 dataIndex: 'gender',
                 key: guid(),
@@ -116,9 +76,8 @@ class NarrativesTable extends React.Component {
                 align: 'center',
                 render: (text, template) => (
                     <div id={`tbl_detail_${template.id}`}>
-                        <Icon id={`tbl_detail_${template.id}`} type="eye" />
-                        <Icon id={`tbl_edit_${template.id}`} type="edit" theme="filled" />
-                        <Icon id={`tbl_plus_${template.id}`} type="plus" />
+                        <Icon id={`tbl_edit_${template.UUID}`} type="edit" theme="filled" />
+                        <Icon id={`tbl_plus_${template.UUID}`} type="delete" />
                     </div>
                 ),
             },

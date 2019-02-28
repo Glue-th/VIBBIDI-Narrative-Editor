@@ -16,7 +16,7 @@
 import { Icon, Table } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import { guid } from '../../../util/utils';
+import { guid } from '../../../../util/utils';
 
 class KeywordTable extends React.Component {
     render() {

@@ -8,9 +8,7 @@
 import {
     Button, Card, Col, Form, Input, Row, Spin
 } from 'antd';
-import {
-    convertToRaw, EditorState, convertFromRaw, ContentState
-} from 'draft-js';
+import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 // import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
 import _ from 'lodash';
 import { createEditorState } from 'medium-draft';
@@ -28,10 +26,10 @@ import {
 } from '../../../api/index';
 import { getUrlAndAchor, getVideoLink } from '../../organisms/medium-draft/exporter';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
-import AlbumsDetailTable from './albums-details-table';
 import EditorNarratives from './Editor';
-import KeywordTable from './keyword-table';
-import NarrativesDetailTable from './narratives-details-table';
+import AlbumsDetailTable from './Table/albums-details-table';
+import KeywordTable from './Table/keyword-table';
+import NarrativesDetailTable from './Table/narratives-details-table';
 import VideoDataTable from './video-table';
 
 const FormItem = Form.Item;
@@ -109,16 +107,7 @@ class NewNarratives extends React.Component {
                         hashTag += `#${narrativeDetail.tags[i].title} `;
                     }
                 }
-                // const rawData = mdToDraftjs(narrativeDetail.content_json);
-                // const contentState = convertFromRaw(rawData);
-                // await Object.entries(rawData.entityMap).forEach(([key, value]) => {
-                //     if (value.type === 'IMAGE') {
-                //         rawData.entityMap[key].type = 'embed';
-                //     }
-                // });
-                console.log(JSON.stringify(convertFromRaw(narrativeDetail.content_json)));
-                // const newEditorState = EditorState.createWithContent(contentState);
-                // this.onChange(newEditorState);
+                // console.log(JSON.stringify(convertFromRaw(narrativeDetail.content_json)));
                 this.onChange(
                     EditorState.push(
                         this.state.editorState,
