@@ -450,6 +450,10 @@ const Container = styled.div`
         .ant-card-body {
             padding: 0;
         }
+        .md-block-atomic {
+            margin: 0;
+            border: 1px solid;
+        }
     }
 `;
 const Title = styled.div`

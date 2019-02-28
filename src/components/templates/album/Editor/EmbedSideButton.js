@@ -30,7 +30,7 @@ class EmbedSideButton extends React.Component {
         const content = editorState.getCurrentContent();
         const res = await Promise.resolve(getDatasourceByYoutubeUrl(url));
         const datasource = res.data.data.findByYoutubeUrl || null;
-        console.log(JSON.stringify(datasource));
+        // console.log(JSON.stringify(datasource));
         const contentWithEntity = content.createEntity('embed', 'IMMUTABLE', {
             url,
             datasource,
