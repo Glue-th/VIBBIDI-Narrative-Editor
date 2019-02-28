@@ -16,8 +16,8 @@
 import { Icon, Table } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import { generateDataAlbum } from './test';
-import { guid } from '../../../util/utils';
+import { generateDataAlbum } from '../test';
+import { guid } from '../../../../util/utils';
 
 class AlbumsDetailsTable extends React.Component {
     onItemClick = album => () => {

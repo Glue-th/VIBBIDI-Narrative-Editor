@@ -328,14 +328,6 @@ export const GlobalStyle = createGlobalStyle`
     background-color: transparent;
   }
 
-  a {
-    color: var(--fg-primary);
-    text-decoration: none;
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
   /* Hide visually and from screen readers */
   .hidden {
     display: none !important;

@@ -1,16 +1,14 @@
-import { Button } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import SeoTable from './seo-table';
+import FormSearhSeo from './Form/FormSearhSeo';
+import SeoTable from './Table/seo-table';
 
 class SEO extends React.Component {
     render() {
         return (
             <Container>
                 <Title>SEO</Title>
-                <div className="create-narratives">
-                    <Button size="small">New Album Narratives</Button>
-                </div>
+                <FormSearhSeo />
                 <div className="table-narratives">
                     <SeoTable />
                 </div>

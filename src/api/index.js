@@ -5,6 +5,14 @@ import axios from 'axios';
 const API_HOST = 'https://api.vibbidi.net';
 const GQL_HOST = 'https://api.vibbidi.net/api/v6/graphql';
 
+const axiosConfig = {
+    headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        Authorization:
+            'BEARER eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjozMjMwMzk1NTQ2MTYxOTQsInVzZXJuYW1lIjoibG9uZ3B2Iiwic2Vzc2lvbl9pZCI6IkNBMkY3NDU4Njg3NDQ4RTc5Qzc3RDA1M0UzRDZBREMxIiwic2Vzc2lvbl9leHBpcmVzX2F0IjoxNjM3NzMwMTI4NTg0fQ.ie7MH-Dz7d5T9gtQ0MkEX5i-NquJdauxowbyZtaf5pQ',
+    },
+};
 export function searchAlbums(albumTitle, artistName) {
     return axios.get(`${API_HOST}/api/v6/narratives`, {
         params: {
@@ -120,10 +128,6 @@ export function getDatasourceByYoutubeUrl(youtubeUrl) {
                 youtubeUrl: youtubeUrl,
             },
         },
-        {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        }
+        axiosConfig,
     );
 }
