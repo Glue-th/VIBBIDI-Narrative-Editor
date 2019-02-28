@@ -16,8 +16,8 @@
 import { Icon, Table } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import { generateDataAlbum } from './test';
-import { guid } from '../../../util/utils';
+import { generateDataAlbum } from '../test';
+import { guid } from '../../../../util/utils';
 
 class NarrativesDetailsTable extends React.Component {
     onItemClick = e => {
@@ -41,8 +41,7 @@ class NarrativesDetailsTable extends React.Component {
                             onClick={this.onItemClick}
                             style={{
                                 color:
-                                    template.UUID ===
-                                    this.props.selected_narrative_uuid
+                                    template.UUID === this.props.selected_narrative_uuid
                                         ? 'red'
                                         : 'black',
                                 cursor: 'pointer',
@@ -64,7 +63,7 @@ class NarrativesDetailsTable extends React.Component {
                 }),
             },
             {
-                title: 'Owner',
+                title: 'Author',
                 dataIndex: 'owner',
                 key: guid(),
                 align: 'center',

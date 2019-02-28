@@ -9,9 +9,9 @@ import {
     Button, Card, Col, Form, Input, Row, Spin
 } from 'antd';
 import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
-// import draftToMarkdown from 'draftjs-to-markdown';
-import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
-import { createEditorState, Editor } from 'medium-draft';
+// import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
+import _ from 'lodash';
+import { createEditorState } from 'medium-draft';
 import 'medium-draft/lib/index.css';
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -24,17 +24,17 @@ import {
     setNarrativeTags,
     updateNarrative,
 } from '../../../api/index';
+import { getUrlAndAchor, getVideoLink } from '../../organisms/medium-draft/exporter';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
-import AlbumsDetailTable from './albums-details-table';
-import KeywordTable from './keyword-table';
-import NarrativesDetailTable from './narratives-details-table';
+import EditorNarratives from './Editor';
+import AlbumsDetailTable from './Table/albums-details-table';
+import KeywordTable from './Table/keyword-table';
+import NarrativesDetailTable from './Table/narratives-details-table';
+import VideoDataTable from './video-table';
 
 const FormItem = Form.Item;
 const { TextArea } = Input;
-const toolbarConfig = {
-    block: [],
-    inline: ['BOLD', 'ITALIC', 'UNDERLINE', 'hyperlink'],
-};
+
 class NewNarratives extends React.Component {
     constructor(props) {
         super(props);
@@ -45,45 +45,38 @@ class NewNarratives extends React.Component {
             narratives: [],
             narrativeDetail: null,
             numberSubSection: 3,
-            editorState: {
-                section0: createEditorState(),
-                section1: createEditorState(),
-                section2: createEditorState(),
-                section3: createEditorState(),
-            },
+            editorState: createEditorState(),
             hashTag: '',
             contents: [],
             keywords: [],
+            videoDatas: [],
             loading: false,
         };
-        this.onChangeEditor = index => editor => {
-            const { editorState, narrativeDetail, contents } = this.state;
-            editorState[`section${index}`] = editor;
-            const rawContentState = convertToRaw(editor.getCurrentContent());
-            const markup = draftjsToMd(rawContentState);
-            if (narrativeDetail) {
-                narrativeDetail.content_json.sections[index].content = markup;
-            } else {
-                contents[index] = markup;
-            }
-            this.setState({ editorState, narrativeDetail, contents });
-        };
 
-        this.refsEditor = React.createRef();
+        this.onChange = editorState => {
+            // console.log(JSON.stringify(convertToRaw(editorState.getCurrentContent())));
+            // const rawContentState = convertToRaw(editorState.getCurrentContent());
+            // const markup = draftjsToMd(rawContentState);
+            this.setState({ editorState });
+            this.setKeyword();
+        };
     }
 
-    componentDidMount = () => {
-        // getDatasourceByYoutubeUrl('https://www.youtube.com/watch?v=nfWlot6h_JM')
-        //     .then(res => res.data.data.findByYoutubeUrl)
-        //     .then(track => {
-        //         console.log(
-        //             'https://www.youtube.com/watch?v=nfWlot6h_JM',
-        //             '==>',
-        //             track.datasourceId,
-        //         );
-        //     })
-        //     .catch(e => console.log(e.message));
-    };
+    setKeyword = _.debounce(async e => {
+        const rawContentState = convertToRaw(this.state.editorState.getCurrentContent());
+        const keywords = getUrlAndAchor(rawContentState);
+        const videoDatas = getVideoLink(rawContentState);
+        await Promise.all(
+            videoDatas.map(async videoData => {
+                const res = await Promise.resolve(getDatasourceByYoutubeUrl(videoData.uri));
+                videoData.datasourceId =
+                    (res.data.data.findByYoutubeUrl &&
+                        res.data.data.findByYoutubeUrl.datasourceId) ||
+                    null;
+            }),
+        );
+        this.setState({ keywords, videoDatas });
+    }, 1000);
 
     onAlbumClicked = album => {
         this.handleCancel();
@@ -104,57 +97,26 @@ class NewNarratives extends React.Component {
             this.setState({ selectedNarrativeUuid: null });
             return;
         }
-        const { editorState } = this.state;
         this.setState({ selectedNarrativeUuid: narrativeUuid, loading: true });
-        let keywords = [];
         getNarrativeDetail(narrativeUuid)
             .then(res => res.data)
-            .then(narrativeDetail => {
-                if (
-                    narrativeDetail &&
-                    narrativeDetail.content_json &&
-                    narrativeDetail.content_json.sections
-                ) {
-                    for (let i = 0; i < narrativeDetail.content_json.sections.length; i += 1) {
-                        if (narrativeDetail.content_json.sections[i].content) {
-                            const nodes = narrativeDetail.content_json.sections[i].content
-                                .split('[')
-                                .slice(1);
-                            const content = [];
-                            nodes.forEach(node => {
-                                // Link (Text + URL)
-                                node = `[${node}`;
-                                if (node.indexOf('[') === 0) {
-                                    const matches = node.match(/\[(.*)\]\((.*)\)/);
-                                    content.push({
-                                        text: matches[1],
-                                        url: matches[2],
-                                    });
-                                }
-                            });
-                            keywords = keywords.concat(content);
-                            const rawData = mdToDraftjs(
-                                narrativeDetail.content_json.sections[i].content,
-                            );
-                            const contentState = convertFromRaw(rawData);
-                            const newEditorState = EditorState.createWithContent(contentState);
-                            editorState[`section${i}`] = newEditorState;
-                        } else {
-                            editorState[`section${i}`] = createEditorState();
-                        }
-                    }
-                }
+            .then(async narrativeDetail => {
                 let hashTag = '';
                 if (narrativeDetail && narrativeDetail.tags) {
                     for (let i = 0; i < narrativeDetail.tags.length; i += 1) {
                         hashTag += `#${narrativeDetail.tags[i].title} `;
                     }
                 }
-                this.setState({
+                // console.log(JSON.stringify(convertFromRaw(narrativeDetail.content_json)));
+                this.onChange(
+                    EditorState.push(
+                        this.state.editorState,
+                        convertFromRaw(narrativeDetail.content_json),
+                    ),
+                );
+                return this.setState({
                     narrativeDetail,
-                    editorState,
                     hashTag,
-                    keywords,
                     loading: false,
                 });
             })
@@ -170,22 +132,14 @@ class NewNarratives extends React.Component {
 
     handleCreate = e => {
         e.preventDefault();
-        const { selectedAlbum, contents } = this.state;
+        const { selectedAlbum, editorState } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
-                if (selectedAlbum && contents.length > 0) {
+                if (selectedAlbum) {
                     this.setState({ loading: true });
                     console.log('Received values of form: ', values);
-                    const sections = [];
-                    sections.push({ content: contents[0] });
-                    for (let index = 1; index <= 3; index += 1) {
-                        const section = {
-                            title: values[`sub-tittle-new-${index}`],
-                            datasource_id: values[`datasourceID_new_${index}`],
-                            content: contents[index],
-                        };
-                        sections.push(section);
-                    }
+                    const rawContentState = convertToRaw(editorState.getCurrentContent());
+                    // const markup = draftjsToMd(rawContentState);
                     const hashtag = values.hashTags
                         .split('#')
                         .map(item => item.trim())
@@ -194,7 +148,7 @@ class NewNarratives extends React.Component {
                         selectedAlbum.id, // album_id
                         values.author, // user_id
                         values.main_title, // title
-                        { sections }, // content_json
+                        rawContentState, // content_json
                     )
                         .then(res => res.data.narrative.id)
                         .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
@@ -222,7 +176,9 @@ class NewNarratives extends React.Component {
     handleSave = e => {
         e.preventDefault();
         console.log('update');
-        const { selectedNarrativeUuid, selectedAlbum, narrativeDetail } = this.state;
+        const {
+            selectedNarrativeUuid, selectedAlbum, narrativeDetail, editorState
+        } = this.state;
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 this.setState({ loading: true });
@@ -233,18 +189,13 @@ class NewNarratives extends React.Component {
                     .slice(1);
 
                 if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
-                    for (let index = 1; index <= 3; index += 1) {
-                        narrativeDetail.content_json.sections[index].title =
-                            values[`sub-tittle-${index}`];
-                        narrativeDetail.content_json.sections[index].datasource_id =
-                            values[`datasourceID_${index}`];
-                    }
+                    const rawContentState = convertToRaw(editorState.getCurrentContent());
                     updateNarrative(
                         selectedNarrativeUuid, // narrative_id
                         selectedAlbum.id, // album_id
                         values.author, // user_id
                         values.main_title, // title
-                        narrativeDetail.content_json, // content_json
+                        rawContentState, // content_json
                     )
                         .then(() => setNarrativeTags(selectedNarrativeUuid, hashtag))
                         .then(() => {
@@ -258,7 +209,10 @@ class NewNarratives extends React.Component {
                                 .catch(e => console.log(e.message));
                             alert('update narrative success');
                         })
-                        .catch(err => { console.log('update fail', err.message); this.setState({ loading: false }); });
+                        .catch(err => {
+                            console.log('update fail', err.message);
+                            this.setState({ loading: false });
+                        });
                 }
                 this.setState({ loading: false });
             }
@@ -269,23 +223,12 @@ class NewNarratives extends React.Component {
         this.setState({
             narrativeDetail: null,
             selectedNarrativeUuid: null,
-            numberSubSection: 3,
-            editorState: {
-                section0: createEditorState(),
-                section1: createEditorState(),
-                section2: createEditorState(),
-                section3: createEditorState(),
-            },
+            editorState: createEditorState(),
             hashTag: '',
             keywords: [],
+            videoDatas: [],
         });
         this.props.form.resetFields();
-    };
-
-    addSection = () => {
-        this.setState(prevState => ({
-            numberSubSection: prevState.numberSubSection + 1,
-        }));
     };
 
     handleFindDataSource = (fieldLink, fieldDatasource) => () => {
@@ -293,7 +236,7 @@ class NewNarratives extends React.Component {
         if (link) {
             this.setState({ loading: true });
             getDatasourceByYoutubeUrl(link)
-                .then(res => res.data.data.findByYoutubeUrl)
+                .then(res => res.data.findByYoutubeUrl)
                 .then(track => {
                     console.log(track.datasourceId);
                     this.props.form.setFieldsValue({
@@ -313,104 +256,17 @@ class NewNarratives extends React.Component {
 
     render() {
         const { getFieldDecorator } = this.props.form;
+        const formItemLayout = {
+            labelCol: { span: 3 },
+            wrapperCol: { span: 20 },
+        };
         const {
-            narrativeDetail, numberSubSection, editorState, hashTag, keywords
+            narrativeDetail, editorState, hashTag, keywords, videoDatas
         } = this.state;
-        let start = 1;
-        if (
-            narrativeDetail &&
-            narrativeDetail.content_json &&
-            narrativeDetail.content_json.sections
-        ) {
-            start = narrativeDetail.content_json.sections.length;
-        }
-        const subSections = [];
-        for (let index = start; index <= numberSubSection; index += 1) {
-            subSections.push(
-                <div key={index}>
-                    <Row gutter={16} style={{ paddingTop: '1em' }}>
-                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                            <span id={`lblSub-tittle-new-${index}`} className="label">
-                                {`Sub-tittle ${index}`}
-                            </span>
-                        </Col>
-                        <Col xs={20} sm={20} md={20} lg={20} xl={20}>
-                            <FormItem>
-                                {getFieldDecorator(`sub-tittle-new-${index}`)(
-                                    <Input
-                                        id={`input_sub-tittle-new-${index}`}
-                                        placeholder="Sub-tittle"
-                                        style={{ width: '100%' }}
-                                    />,
-                                )}
-                            </FormItem>
-                        </Col>
-                    </Row>
-                    <Row gutter={16}>
-                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                            <span id={`lblVideoURL_${index}`} className="label">
-                                Video URL
-                            </span>
-                        </Col>
-                        <Col xs={7} sm={7} md={7} lg={7} xl={7}>
-                            <FormItem>
-                                {getFieldDecorator(`video_url_new_${index}`)(
-                                    <Input
-                                        id={`input_video_url_new_${index}`}
-                                        placeholder=" Video URL"
-                                        style={{ width: '100%' }}
-                                    />,
-                                )}
-                            </FormItem>
-                        </Col>
-                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
-                            <Button
-                                type="danger"
-                                id={`lblDatasourceID_${index}`}
-                                onClick={this.handleFindDataSource(
-                                    `video_url_new_${index}`,
-                                    `datasourceID_new_${index}`,
-                                )}
-                            >
-                                Find
-                            </Button>
-                        </Col>
-                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                            <span id={`lblDatasourceID_${index}`} className="label">
-                                Datasource ID
-                            </span>
-                        </Col>
-                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-                            <FormItem>
-                                {getFieldDecorator(`datasourceID_new_${index}`)(
-                                    <Input
-                                        id={`input_datasourceID_new_${index}`}
-                                        placeholder="Datasource ID"
-                                        style={{ width: '100%' }}
-                                    />,
-                                )}
-                            </FormItem>
-                        </Col>
-                    </Row>
-                    <Row gutter={16}>
-                        <Col xs={3} sm={3} md={3} lg={3} xl={3} />
-                        <Col xs={20} sm={20} md={20} lg={20} xl={20}>
-                            <Card bordered>
-                                <Editor
-                                    editorState={this.state.editorState[`section${index}`]}
-                                    onChange={this.onChangeEditor(index)}
-                                    toolbarConfig={toolbarConfig}
-                                />
-                            </Card>
-                        </Col>
-                    </Row>
-                </div>,
-            );
-        }
-
         return (
             <Container>
                 {this.state.loading && <Spin />}
+
                 <Title>Create Album Narratives</Title>
                 <div className="new-template">
                     {/* Search Album */}
@@ -461,252 +317,68 @@ class NewNarratives extends React.Component {
                     {this.state.selectedAlbum && (
                         <Form onSubmit={this.handleCreate} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span id="lblAuthor" className="label">
-                                        Author
-                                    </span>
-                                </Col>
-                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
-                                    <FormItem>
-                                        {getFieldDecorator('author', {
-                                            initialValue:
-                                                narrativeDetail && narrativeDetail.user_id,
-                                            rules: [
-                                                {
-                                                    required: true,
-                                                    message: 'Please input author',
-                                                },
-                                            ],
-                                        })(
-                                            <Input
-                                                placeholder="author"
-                                                style={{ width: '100%' }}
-                                            />,
-                                        )}
-                                    </FormItem>
-                                </Col>
+                                <FormItem label="Author" {...formItemLayout}>
+                                    {getFieldDecorator('author', {
+                                        initialValue: narrativeDetail && narrativeDetail.user_id,
+                                        rules: [
+                                            {
+                                                required: true,
+                                                message: 'Please input author',
+                                            },
+                                        ],
+                                    })(<Input placeholder="author" style={{ width: '100%' }} />)}
+                                </FormItem>
                             </Row>
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
-                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                    <span id="lblMAINTITTLE" className="label">
-                                        MAIN TITTLE
-                                    </span>
-                                </Col>
-                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
-                                    <FormItem>
-                                        {getFieldDecorator('main_title', {
-                                            initialValue: narrativeDetail && narrativeDetail.title,
-                                            rules: [
-                                                {
-                                                    required: true,
-                                                    message: 'Please input MAIN TITTLE',
-                                                },
-                                            ],
-                                        })(
-                                            <Input
-                                                id="input_main_title"
-                                                placeholder="title of narrative"
-                                                style={{ width: '100%' }}
-                                            />,
-                                        )}
-                                    </FormItem>
-                                </Col>
+                                <FormItem label="MAIN TITTLE" {...formItemLayout}>
+                                    {getFieldDecorator('main_title', {
+                                        initialValue: narrativeDetail && narrativeDetail.title,
+                                        rules: [
+                                            {
+                                                required: true,
+                                                message: 'Please input MAIN TITTLE',
+                                            },
+                                        ],
+                                    })(
+                                        <Input
+                                            id="input_main_title"
+                                            placeholder="title of narrative"
+                                            style={{ width: '100%' }}
+                                        />,
+                                    )}
+                                </FormItem>
                             </Row>
                             <Row gutter={16}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3} />
-                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                <Col xs={20} sm={20} xl={20} style={{ padding: '0' }}>
                                     <Card bordered>
-                                        <Editor
-                                            // ref={this.refsEditor}
-                                            editorState={editorState.section0}
-                                            onChange={this.onChangeEditor(0)}
-                                            // inlineButtons={this.inlineButtons}
-                                            // blockButtons={this.blockButtons}
-                                            toolbarConfig={toolbarConfig}
+                                        <EditorNarratives
+                                            editorState={editorState}
+                                            onChange={this.onChange}
                                         />
                                     </Card>
                                 </Col>
                             </Row>
-                            <Card title="Sections" bordered={false}>
-                                {narrativeDetail &&
-                                    narrativeDetail.content_json &&
-                                    narrativeDetail.content_json.sections &&
-                                    narrativeDetail.content_json.sections.length > 1 &&
-                                    narrativeDetail.content_json.sections.map((section, index) => {
-                                        if (index > 0) {
-                                            return (
-                                                <div key={index}>
-                                                    <Row
-                                                        gutter={16}
-                                                        style={{
-                                                            paddingTop: '1em',
-                                                        }}
-                                                    >
-                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                                            <span
-                                                                id={`lblSub-tittle-${index}`}
-                                                                className="label"
-                                                            >
-                                                                {`Sub-tittle ${index}`}
-                                                            </span>
-                                                        </Col>
-                                                        <Col
-                                                            xs={20}
-                                                            sm={20}
-                                                            md={20}
-                                                            lg={20}
-                                                            xl={20}
-                                                        >
-                                                            <FormItem>
-                                                                {getFieldDecorator(
-                                                                    `sub-tittle-${index}`,
-                                                                    {
-                                                                        initialValue:
-                                                                            section.title || '',
-                                                                    },
-                                                                )(
-                                                                    <Input
-                                                                        id={`input_sub-tittle-${index}`}
-                                                                        placeholder="Sub-tittle"
-                                                                        style={{
-                                                                            width: '100%',
-                                                                        }}
-                                                                    />,
-                                                                )}
-                                                            </FormItem>
-                                                        </Col>
-                                                    </Row>
-                                                    <Row gutter={16}>
-                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3}>
-                                                            <span
-                                                                id={`lblVideoURL_${index}`}
-                                                                className="label"
-                                                            >
-                                                                Video URL
-                                                            </span>
-                                                        </Col>
-                                                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-                                                            <FormItem>
-                                                                {getFieldDecorator(
-                                                                    `video_url_${index}`,
-                                                                    {
-                                                                        initialValue:
-                                                                            section.datasource_id ||
-                                                                            '',
-                                                                    },
-                                                                )(
-                                                                    <Input
-                                                                        id={`input_video_url_${index +
-                                                                            1}`}
-                                                                        placeholder=" Video URL"
-                                                                        style={{
-                                                                            width: '100%',
-                                                                        }}
-                                                                    />,
-                                                                )}
-                                                            </FormItem>
-                                                        </Col>
-                                                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
-                                                            <Button
-                                                                type="danger"
-                                                                id={`lblDatasourceID_${index}`}
-                                                                onClick={this.handleFindDataSource(
-                                                                    `video_url_${index}`,
-                                                                    `datasourceID_${index}`,
-                                                                )}
-                                                            >
-                                                                Find
-                                                            </Button>
-                                                        </Col>
-                                                        <Col xs={2} sm={2} md={2} lg={2} xl={2}>
-                                                            <span
-                                                                id={`lblDatasourceID_${index}`}
-                                                                className="label"
-                                                            >
-                                                                Datasource ID
-                                                            </span>
-                                                        </Col>
-                                                        <Col xs={8} sm={8} md={8} lg={8} xl={8}>
-                                                            <FormItem>
-                                                                {getFieldDecorator(
-                                                                    `datasourceID_${index}`,
-                                                                    {
-                                                                        initialValue:
-                                                                            section.datasource_id ||
-                                                                            '',
-                                                                    },
-                                                                )(
-                                                                    <Input
-                                                                        id={`input_datasourceID_${index}`}
-                                                                        placeholder="Datasource ID"
-                                                                        style={{
-                                                                            width: '100%',
-                                                                        }}
-                                                                    />,
-                                                                )}
-                                                            </FormItem>
-                                                        </Col>
-                                                    </Row>
-                                                    <Row gutter={16}>
-                                                        <Col xs={3} sm={3} md={3} lg={3} xl={3} />
-                                                        <Col
-                                                            xs={20}
-                                                            sm={20}
-                                                            md={20}
-                                                            lg={20}
-                                                            xl={20}
-                                                        >
-                                                            <Card bordered>
-                                                                <Editor
-                                                                    // ref={this.refsEditor}
-                                                                    editorState={
-                                                                        editorState[
-                                                                            `section${index}`
-                                                                        ]
-                                                                    }
-                                                                    onChange={this.onChangeEditor(
-                                                                        index,
-                                                                    )}
-                                                                    toolbarConfig={toolbarConfig}
-                                                                />
-                                                            </Card>
-                                                        </Col>
-                                                    </Row>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })}
-                                {subSections}
-                            </Card>
-                            {/* <Row>
-                                <Col xs={23}>
-                                    <Button type="primary" block onClick={this.addSection}>
-                                        Add Section
-                                    </Button>
-                                </Col>
-                            </Row> */}
                             <Row>
-                                <Col xs={24}>
-                                    <Card bordered={false}>
-                                        <FormItem label={<span id="hash-tags">Hashtags</span>}>
-                                            {getFieldDecorator('hashTags', {
-                                                initialValue: hashTag || '',
-                                            })(
-                                                <TextArea
-                                                    placeholder="#TaylorSwift #Pop #Reputation #Endgame"
-                                                    autosize={{
-                                                        minRows: 4,
-                                                    }}
-                                                />,
-                                            )}
-                                        </FormItem>
-                                    </Card>
-                                </Col>
+                                <FormItem label={<span id="hash-tags">Hashtags</span>}>
+                                    {getFieldDecorator('hashTags', {
+                                        initialValue: hashTag || '',
+                                    })(
+                                        <TextArea
+                                            placeholder="#TaylorSwift #Pop #Reputation #Endgame"
+                                            autosize={{
+                                                minRows: 4,
+                                            }}
+                                        />,
+                                    )}
+                                </FormItem>
                             </Row>
                             <Row>
                                 <Col xs={24}>
-                                    <Card title="keyword" bordered={false}>
+                                    <Card title="Video Data" bordered={false}>
+                                        <VideoDataTable videoDatas={videoDatas} />
+                                    </Card>
+                                    <Card title="Keyword" bordered={false}>
                                         <KeywordTable keywords={keywords} />
                                     </Card>
                                 </Col>

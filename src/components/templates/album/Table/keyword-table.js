@@ -16,36 +16,36 @@
 import { Icon, Table } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import { guid } from '../../../util/utils';
+import { guid } from '../../../../util/utils';
 
 class KeywordTable extends React.Component {
     render() {
         const columns = [
             {
                 title: 'Keyword',
-                dataIndex: 'text',
+                dataIndex: 'keyword',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    children: template.text,
+                    children: template.keyword,
                 }),
             },
             {
                 title: 'Category',
-                dataIndex: '',
+                dataIndex: 'keyword',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    children: template.category,
+                    children: template.keyword,
                 }),
             },
             {
                 title: 'URL',
-                dataIndex: 'url',
+                dataIndex: 'link',
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    children: template.url,
+                    children: template.link,
                 }),
             },
             {

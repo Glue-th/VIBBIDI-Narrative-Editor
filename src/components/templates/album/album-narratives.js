@@ -1,16 +1,14 @@
-import { Button } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import NarrativesTable from './narratives-table';
+import FormSearhAlbumNarratives from './Form/FormSearhAlbumNarratives';
+import NarrativesTable from './Table/narratives-table';
 
 class AlbumNarratives extends React.Component {
     render() {
         return (
             <Container>
                 <Title>Admin Vibbidi Platform</Title>
-                <div className="create-template">
-                    <Button size="small">New Album Narratives</Button>
-                </div>
+                <FormSearhAlbumNarratives />
                 <div className="table-template">
                     <NarrativesTable />
                 </div>

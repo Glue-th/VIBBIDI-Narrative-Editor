@@ -20,7 +20,7 @@ const envKeys = Object.keys(env).reduce((prev, next) => {
     return prev;
 }, {});
 const config = {
-    entry: [path.join(__dirname, '../', 'src', 'app')],
+    entry: ['babel-polyfill', path.join(__dirname, '../', 'src', 'app')],
     output: {
         path: path.join(__dirname, '../', 'dist'),
         filename: 'js/[name]_[hash].js',
@@ -43,8 +43,8 @@ const config = {
                 },
             },
             {
-                test: /\.css$/,
-                use: ['style-loader', 'css-loader'],
+                test: /(\.css|\.scss)$/,
+                loaders: ['style-loader', 'css-loader', 'sass-loader'],
             },
         ],
     },
