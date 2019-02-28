@@ -178,18 +178,21 @@ class NewNarratives extends React.Component {
                     console.log('Received values of form: ', values);
                     const sections = [];
                     sections.push({ content: contents[0] });
-                    for (let index = 1; index <= 3; index += 1) {
-                        const section = {
-                            title: values[`sub-tittle-new-${index}`],
-                            datasource_id: values[`datasourceID_new_${index}`],
-                            content: contents[index],
-                        };
-                        sections.push(section);
+                    for (let index = 1; index <= contents.length; index += 1) {
+                        if (values[`sub-tittle-new-${index}`]) {
+                            const section = {
+                                title: values[`sub-tittle-new-${index}`],
+                                datasource_id: values[`datasourceID_new_${index}`],
+                                content: contents[index],
+                            };
+                            sections.push(section);
+                        }
                     }
                     const hashtag = values.hashTags
                         .split('#')
                         .map(item => item.trim())
                         .slice(1);
+                    // console.log(sections);
                     createNarrative(
                         selectedAlbum.id, // album_id
                         values.author, // user_id
@@ -234,10 +237,12 @@ class NewNarratives extends React.Component {
 
                 if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
                     for (let index = 1; index <= 3; index += 1) {
-                        narrativeDetail.content_json.sections[index].title =
-                            values[`sub-tittle-${index}`];
-                        narrativeDetail.content_json.sections[index].datasource_id =
-                            values[`datasourceID_${index}`];
+                        if (values[`sub-tittle-${index}`]) {
+                            narrativeDetail.content_json.sections[index].title =
+                                values[`sub-tittle-${index}`];
+                            narrativeDetail.content_json.sections[index].datasource_id =
+                                values[`datasourceID_${index}`];
+                        }
                     }
                     updateNarrative(
                         selectedNarrativeUuid, // narrative_id
