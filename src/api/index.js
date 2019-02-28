@@ -30,23 +30,38 @@ export function getNarrativeDetail(narrativeUuid) {
     return axios.get(`${API_HOST}/api/v6/narratives/${narrativeUuid}`);
 }
 
-export function createNarrative(albumId, userId, title, contentJson) {
+export function createNarrative(
+    albumId,
+    userId,
+    title,
+    contentJson,
+    valid = 1
+) {
     return axios.post(`${API_HOST}/api/v6/narratives`, {
         album_id: albumId,
         user_id: userId,
         title: title,
         content_json: contentJson,
+        valid: valid,
     });
 }
 
 /** overide all fields. Carefully */
-export function updateNarrative(narrativeId, albumId, userId, title, contentJson) {
+export function updateNarrative(
+    narrativeId,
+    albumId,
+    userId,
+    title,
+    contentJson,
+    valid = 1
+) {
     return axios.post(`${API_HOST}/api/v6/narratives`, {
         narrative_id: narrativeId,
         album_id: albumId,
         user_id: userId,
         title: title,
         content_json: contentJson,
+        valid: valid,
     });
 }
 
@@ -63,6 +78,17 @@ export function getNarrativeTags(narrativeId) {
 
 export function getNarrativeByUserId(userId) {
     return axios.get(`${API_HOST}/api/v6/narratives/user/${userId}`);
+}
+
+/**
+ *
+ * @param {String} id narrative id
+ * @param {Int} valid 0 or 1
+ */
+export function setNarrativeValid(id, valid) {
+    return axios.post(`${API_HOST}/api/v6/narratives/${id}/valid`, {
+        valid: valid,
+    });
 }
 
 /**
