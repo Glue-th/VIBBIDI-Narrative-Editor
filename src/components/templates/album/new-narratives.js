@@ -256,10 +256,6 @@ class NewNarratives extends React.Component {
 
     render() {
         const { getFieldDecorator } = this.props.form;
-        const formItemLayout = {
-            labelCol: { span: 3 },
-            wrapperCol: { span: 20 },
-        };
         const {
             narrativeDetail, editorState, hashTag, keywords, videoDatas
         } = this.state;
@@ -317,40 +313,60 @@ class NewNarratives extends React.Component {
                     {this.state.selectedAlbum && (
                         <Form onSubmit={this.handleCreate} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
-                                <FormItem label="Author" {...formItemLayout}>
-                                    {getFieldDecorator('author', {
-                                        initialValue: narrativeDetail && narrativeDetail.user_id,
-                                        rules: [
-                                            {
-                                                required: true,
-                                                message: 'Please input author',
-                                            },
-                                        ],
-                                    })(<Input placeholder="author" style={{ width: '100%' }} />)}
-                                </FormItem>
+                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                    <span id="lblAuthor" className="label">
+                                        Author
+                                    </span>
+                                </Col>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                    <FormItem>
+                                        {getFieldDecorator('author', {
+                                            initialValue:
+                                                narrativeDetail && narrativeDetail.user_id,
+                                            rules: [
+                                                {
+                                                    required: true,
+                                                    message: 'Please input author',
+                                                },
+                                            ],
+                                        })(
+                                            <Input
+                                                placeholder="author"
+                                                style={{ width: '100%' }}
+                                            />,
+                                        )}
+                                    </FormItem>
+                                </Col>
                             </Row>
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
-                                <FormItem label="MAIN TITTLE" {...formItemLayout}>
-                                    {getFieldDecorator('main_title', {
-                                        initialValue: narrativeDetail && narrativeDetail.title,
-                                        rules: [
-                                            {
-                                                required: true,
-                                                message: 'Please input MAIN TITTLE',
-                                            },
-                                        ],
-                                    })(
-                                        <Input
-                                            id="input_main_title"
-                                            placeholder="title of narrative"
-                                            style={{ width: '100%' }}
-                                        />,
-                                    )}
-                                </FormItem>
+                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                    <span id="lblMAINTITTLE" className="label">
+                                        MAIN TITTLE
+                                    </span>
+                                </Col>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                    <FormItem>
+                                        {getFieldDecorator('main_title', {
+                                            initialValue: narrativeDetail && narrativeDetail.title,
+                                            rules: [
+                                                {
+                                                    required: true,
+                                                    message: 'Please input MAIN TITTLE',
+                                                },
+                                            ],
+                                        })(
+                                            <Input
+                                                id="input_main_title"
+                                                placeholder="title of narrative"
+                                                style={{ width: '100%' }}
+                                            />,
+                                        )}
+                                    </FormItem>
+                                </Col>
                             </Row>
                             <Row gutter={16}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3} />
-                                <Col xs={20} sm={20} xl={20} style={{ padding: '0' }}>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                                     <Card bordered>
                                         <EditorNarratives
                                             editorState={editorState}
@@ -360,18 +376,22 @@ class NewNarratives extends React.Component {
                                 </Col>
                             </Row>
                             <Row>
-                                <FormItem label={<span id="hash-tags">Hashtags</span>}>
-                                    {getFieldDecorator('hashTags', {
-                                        initialValue: hashTag || '',
-                                    })(
-                                        <TextArea
-                                            placeholder="#TaylorSwift #Pop #Reputation #Endgame"
-                                            autosize={{
-                                                minRows: 4,
-                                            }}
-                                        />,
-                                    )}
-                                </FormItem>
+                                <Col xs={24}>
+                                    <Card bordered={false}>
+                                        <FormItem label={<span id="hash-tags">Hashtags</span>}>
+                                            {getFieldDecorator('hashTags', {
+                                                initialValue: hashTag || '',
+                                            })(
+                                                <TextArea
+                                                    placeholder="#TaylorSwift #Pop #Reputation #Endgame"
+                                                    autosize={{
+                                                        minRows: 4,
+                                                    }}
+                                                />,
+                                            )}
+                                        </FormItem>
+                                    </Card>
+                                </Col>
                             </Row>
                             <Row>
                                 <Col xs={24}>

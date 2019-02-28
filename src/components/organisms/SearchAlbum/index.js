@@ -15,11 +15,13 @@ class AlbumSearch extends React.Component {
 
     handleSearch(e) {
         e.preventDefault();
+        console.log('search');
         if (this.props.searchCallback) {
             this.props.searchCallback([], true);
         }
         this.props.form.validateFields((err, values) => {
             if (!err) {
+                console.log('Received values of form: ', values);
                 const { album_name, artist_name } = values;
                 searchAlbums(album_name, artist_name)
                     .then(res => res.data.albums)
@@ -41,15 +43,16 @@ class AlbumSearch extends React.Component {
 
     render() {
         const { getFieldDecorator } = this.props.form;
-        const formItemLayout = {
-            labelCol: { span: 5 },
-            wrapperCol: { span: 18 },
-        };
         return (
             <Form onSubmit={this.handleSearch} layout="vertical">
                 <Row gutter={16}>
-                    <Col xs={10} sm={10} md={10} lg={10} xl={10}>
-                        <FormItem label="Album Name" {...formItemLayout}>
+                    <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                        <span id="lblAlbumName" className="label">
+                            Album name
+                        </span>
+                    </Col>
+                    <Col xs={6} sm={8} md={6} lg={6} xl={6}>
+                        <FormItem>
                             {getFieldDecorator('album_name', {
                                 rules: [
                                     {
@@ -66,8 +69,13 @@ class AlbumSearch extends React.Component {
                             )}
                         </FormItem>
                     </Col>
-                    <Col xs={10} sm={10} md={10} lg={10} xl={10}>
-                        <FormItem label="Artist Name" {...formItemLayout}>
+                    <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                        <span id="lblArtistName" className="label">
+                            Artist name
+                        </span>
+                    </Col>
+                    <Col xs={6} sm={8} md={6} lg={6} xl={6}>
+                        <FormItem>
                             {getFieldDecorator('artist_name', {
                                 rules: [
                                     {
