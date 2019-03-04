@@ -138,12 +138,23 @@ class NewNarratives extends React.Component {
                 if (selectedAlbum) {
                     this.setState({ loading: true });
                     console.log('Received values of form: ', values);
-                    const rawContentState = convertToRaw(editorState.getCurrentContent());
-                    // const markup = draftjsToMd(rawContentState);
+                    const sections = [];
+                    sections.push({ content: contents[0] });
+                    for (let index = 1; index <= contents.length; index += 1) {
+                        if (values[`sub-tittle-new-${index}`]) {
+                            const section = {
+                                title: values[`sub-tittle-new-${index}`],
+                                datasource_id: values[`datasourceID_new_${index}`],
+                                content: contents[index],
+                            };
+                            sections.push(section);
+                        }
+                    }
                     const hashtag = values.hashTags
                         .split('#')
                         .map(item => item.trim())
                         .slice(1);
+                    // console.log(sections);
                     createNarrative(
                         selectedAlbum.id, // album_id
                         values.author, // user_id
@@ -189,7 +200,18 @@ class NewNarratives extends React.Component {
                     .slice(1);
 
                 if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
+<<<<<<< HEAD
                     const rawContentState = convertToRaw(editorState.getCurrentContent());
+=======
+                    for (let index = 1; index <= 3; index += 1) {
+                        if (values[`sub-tittle-${index}`]) {
+                            narrativeDetail.content_json.sections[index].title =
+                                values[`sub-tittle-${index}`];
+                            narrativeDetail.content_json.sections[index].datasource_id =
+                                values[`datasourceID_${index}`];
+                        }
+                    }
+>>>>>>> b0166db6e234b4fd9e557b3be5ac638d5f17787d
                     updateNarrative(
                         selectedNarrativeUuid, // narrative_id
                         selectedAlbum.id, // album_id
