@@ -138,12 +138,23 @@ class NewNarratives extends React.Component {
                 if (selectedAlbum) {
                     this.setState({ loading: true });
                     console.log('Received values of form: ', values);
-                    const rawContentState = convertToRaw(editorState.getCurrentContent());
-                    // const markup = draftjsToMd(rawContentState);
+                    const sections = [];
+                    sections.push({ content: contents[0] });
+                    for (let index = 1; index <= contents.length; index += 1) {
+                        if (values[`sub-tittle-new-${index}`]) {
+                            const section = {
+                                title: values[`sub-tittle-new-${index}`],
+                                datasource_id: values[`datasourceID_new_${index}`],
+                                content: contents[index],
+                            };
+                            sections.push(section);
+                        }
+                    }
                     const hashtag = values.hashTags
                         .split('#')
                         .map(item => item.trim())
                         .slice(1);
+                    // console.log(sections);
                     createNarrative(
                         selectedAlbum.id, // album_id
                         values.author, // user_id
@@ -189,7 +200,18 @@ class NewNarratives extends React.Component {
                     .slice(1);
 
                 if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
+<<<<<<< HEAD
                     const rawContentState = convertToRaw(editorState.getCurrentContent());
+=======
+                    for (let index = 1; index <= 3; index += 1) {
+                        if (values[`sub-tittle-${index}`]) {
+                            narrativeDetail.content_json.sections[index].title =
+                                values[`sub-tittle-${index}`];
+                            narrativeDetail.content_json.sections[index].datasource_id =
+                                values[`datasourceID_${index}`];
+                        }
+                    }
+>>>>>>> b0166db6e234b4fd9e557b3be5ac638d5f17787d
                     updateNarrative(
                         selectedNarrativeUuid, // narrative_id
                         selectedAlbum.id, // album_id
@@ -256,10 +278,6 @@ class NewNarratives extends React.Component {
 
     render() {
         const { getFieldDecorator } = this.props.form;
-        const formItemLayout = {
-            labelCol: { span: 3 },
-            wrapperCol: { span: 20 },
-        };
         const {
             narrativeDetail, editorState, hashTag, keywords, videoDatas
         } = this.state;
@@ -317,40 +335,60 @@ class NewNarratives extends React.Component {
                     {this.state.selectedAlbum && (
                         <Form onSubmit={this.handleCreate} layout="vertical">
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
-                                <FormItem label="Author" {...formItemLayout}>
-                                    {getFieldDecorator('author', {
-                                        initialValue: narrativeDetail && narrativeDetail.user_id,
-                                        rules: [
-                                            {
-                                                required: true,
-                                                message: 'Please input author',
-                                            },
-                                        ],
-                                    })(<Input placeholder="author" style={{ width: '100%' }} />)}
-                                </FormItem>
+                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                    <span id="lblAuthor" className="label">
+                                        Author
+                                    </span>
+                                </Col>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                    <FormItem>
+                                        {getFieldDecorator('author', {
+                                            initialValue:
+                                                narrativeDetail && narrativeDetail.user_id,
+                                            rules: [
+                                                {
+                                                    required: true,
+                                                    message: 'Please input author',
+                                                },
+                                            ],
+                                        })(
+                                            <Input
+                                                placeholder="author"
+                                                style={{ width: '100%' }}
+                                            />,
+                                        )}
+                                    </FormItem>
+                                </Col>
                             </Row>
                             <Row gutter={16} style={{ paddingTop: '1em' }}>
-                                <FormItem label="MAIN TITTLE" {...formItemLayout}>
-                                    {getFieldDecorator('main_title', {
-                                        initialValue: narrativeDetail && narrativeDetail.title,
-                                        rules: [
-                                            {
-                                                required: true,
-                                                message: 'Please input MAIN TITTLE',
-                                            },
-                                        ],
-                                    })(
-                                        <Input
-                                            id="input_main_title"
-                                            placeholder="title of narrative"
-                                            style={{ width: '100%' }}
-                                        />,
-                                    )}
-                                </FormItem>
+                                <Col xs={3} sm={3} md={3} lg={3} xl={3}>
+                                    <span id="lblMAINTITTLE" className="label">
+                                        MAIN TITTLE
+                                    </span>
+                                </Col>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
+                                    <FormItem>
+                                        {getFieldDecorator('main_title', {
+                                            initialValue: narrativeDetail && narrativeDetail.title,
+                                            rules: [
+                                                {
+                                                    required: true,
+                                                    message: 'Please input MAIN TITTLE',
+                                                },
+                                            ],
+                                        })(
+                                            <Input
+                                                id="input_main_title"
+                                                placeholder="title of narrative"
+                                                style={{ width: '100%' }}
+                                            />,
+                                        )}
+                                    </FormItem>
+                                </Col>
                             </Row>
                             <Row gutter={16}>
                                 <Col xs={3} sm={3} md={3} lg={3} xl={3} />
-                                <Col xs={20} sm={20} xl={20} style={{ padding: '0' }}>
+                                <Col xs={20} sm={20} md={20} lg={20} xl={20}>
                                     <Card bordered>
                                         <EditorNarratives
                                             editorState={editorState}
@@ -360,18 +398,22 @@ class NewNarratives extends React.Component {
                                 </Col>
                             </Row>
                             <Row>
-                                <FormItem label={<span id="hash-tags">Hashtags</span>}>
-                                    {getFieldDecorator('hashTags', {
-                                        initialValue: hashTag || '',
-                                    })(
-                                        <TextArea
-                                            placeholder="#TaylorSwift #Pop #Reputation #Endgame"
-                                            autosize={{
-                                                minRows: 4,
-                                            }}
-                                        />,
-                                    )}
-                                </FormItem>
+                                <Col xs={24}>
+                                    <Card bordered={false}>
+                                        <FormItem label={<span id="hash-tags">Hashtags</span>}>
+                                            {getFieldDecorator('hashTags', {
+                                                initialValue: hashTag || '',
+                                            })(
+                                                <TextArea
+                                                    placeholder="#TaylorSwift #Pop #Reputation #Endgame"
+                                                    autosize={{
+                                                        minRows: 4,
+                                                    }}
+                                                />,
+                                            )}
+                                        </FormItem>
+                                    </Card>
+                                </Col>
                             </Row>
                             <Row>
                                 <Col xs={24}>
