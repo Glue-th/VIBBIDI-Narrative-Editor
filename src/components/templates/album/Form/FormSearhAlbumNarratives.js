@@ -17,31 +17,31 @@ class FormSearhAlbumNarratives extends React.Component {
             <Container>
                 <Form onSubmit={this.handleSearch} layout="horizontal">
                     <Row gutter={16}>
-                        <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                        <Col xs={12} sm={24} md={24} lg={12} xl={12}>
                             <FormItem label="Narrative ID" {...formItemLayout}>
                                 {getFieldDecorator('id')(<Input />)}
                             </FormItem>
                         </Col>
-                        <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                        <Col xs={12} sm={24} md={24} lg={12} xl={12}>
                             <FormItem label="Album name" {...formItemLayout}>
                                 {getFieldDecorator('id')(<Input />)}
                             </FormItem>
                         </Col>
                     </Row>
                     <Row gutter={16}>
-                        <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                        <Col xs={12} sm={24} md={24} lg={12} xl={12}>
                             <FormItem label="Album UUID" {...formItemLayout}>
                                 {getFieldDecorator('id')(<Input />)}
                             </FormItem>
                         </Col>
-                        <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                        <Col xs={12} sm={24} md={24} lg={12} xl={12}>
                             <FormItem label="Status" {...formItemLayout}>
                                 {getFieldDecorator('id')(<Input />)}
                             </FormItem>
                         </Col>
                     </Row>
                     <Row gutter={16}>
-                        <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                        <Col xs={12} sm={24} md={24} lg={12} xl={12}>
                             <FormItem label="Author" {...formItemLayout}>
                                 {getFieldDecorator('id')(<Input />)}
                             </FormItem>
@@ -49,7 +49,7 @@ class FormSearhAlbumNarratives extends React.Component {
                         <Col
                             xs={12}
                             sm={12}
-                            md={12}
+                            md={24}
                             lg={12}
                             xl={12}
                             style={{ textAlign: 'right', paddingRight: '2em' }}
