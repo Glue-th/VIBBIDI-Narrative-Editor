@@ -92,9 +92,9 @@ class NewNarratives extends React.Component {
         this.handleCancel();
         this.setState({ selectedAlbum: album, narratives: [], loading: true });
         getAlbumNarratives(album.id)
-            .then(res => res.data.narratives)
-            .then(narratives => {
-                this.setState({ narratives, loading: false });
+            .then(res => res.data.data.album.userNarratives)
+            .then(userNarratives => {
+                this.setState({ narratives: userNarratives, loading: false });
             })
             .catch(e => {
                 console.log(e.message);
@@ -253,10 +253,10 @@ class NewNarratives extends React.Component {
                                 this.setState({ loading: false });
                                 this.handleCancel();
                                 getAlbumNarratives(selectedAlbum.id)
-                                    .then(res => res.data.narratives)
-                                    .then(narratives => {
-                                        this.setState({ narratives });
-                                    })
+                                .then(res => res.data.data.album.userNarratives)
+                                .then(userNarratives => {
+                                    this.setState({ narratives: userNarratives});
+                                })
                                     .catch(e => console.log(e.message));
                                 alert("create narrative success");
                             })
@@ -343,10 +343,10 @@ class NewNarratives extends React.Component {
                                 this.setState({ loading: false });
                                 this.handleCancel();
                                 getAlbumNarratives(selectedAlbum.id)
-                                    .then(res => res.data.narratives)
-                                    .then(narratives => {
-                                        this.setState({ narratives });
-                                    })
+                                .then(res => res.data.data.album.userNarratives)
+                                .then(userNarratives => {
+                                    this.setState({ narratives: userNarratives});
+                                })
                                     .catch(e => console.log(e.message));
                                 alert("update narrative success");
                             })

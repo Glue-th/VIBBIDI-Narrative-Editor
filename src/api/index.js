@@ -14,10 +14,44 @@ export function searchAlbums(albumTitle, artistName) {
     });
 }
 
-export function getAlbumNarratives(albumUuid) {
-    return axios.get(`${API_HOST}/api/v6/narratives/album/${albumUuid}`);
-}
+// export function getAlbumNarratives(albumUuid) {
+//     return axios.get(`${API_HOST}/api/v6/narratives/album/${albumUuid}`);
+// }
 
+export function getAlbumNarratives(albumUuid) {
+    const query = `
+    query AlbumNarratives($albumId: String!, $startPoint: Int, $itemsToGet: Int) {
+        album(albumId: $albumId) {
+          userNarratives(startPoint: $startPoint, itemsToGet: $itemsToGet) {
+                id
+                title
+                author {
+                id
+                username
+                webUri
+                fullName
+                profilePictureUrl
+                }
+            }
+        }
+    }`;
+    return axios.post(
+        GQL_HOST,
+        {
+            query: query,
+            variables: {
+                albumId: albumUuid,
+                startPoint: 0,
+                itemsToGet: 100
+            },
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        }
+    );
+}
 export function getNarrativeDetail(narrativeUuid) {
     return axios.get(`${API_HOST}/api/v6/narratives/${narrativeUuid}`);
 }
