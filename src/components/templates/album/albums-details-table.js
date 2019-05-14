@@ -81,7 +81,7 @@ class AlbumsDetailsTable extends React.Component {
                 render: (text, template) => ({
                     props: { id: `tbl_web_url_${template.id}` },
                     children: (
-                        <a href={'https://www.vibbidi.net' + template.web_url} target="_blank">
+                        <a href={'https://st-www.vibbidi.net' + template.web_url} target="_blank">
                             {template.web_url}
                         </a>
                     ),
