@@ -43,7 +43,7 @@ class NewNarratives extends React.Component {
             narratives: [],
             narrativeDetail: null,
             start: 0,
-            numberSubSection: 0,
+            numberSubSection: 1,
             editorState: {
                 section0: createEditorState(),
                 section1: createEditorState(),
@@ -108,7 +108,7 @@ class NewNarratives extends React.Component {
                 main_title: null
             });
             this.setState({
-                numberSubSection: 3,
+                numberSubSection: 1,
                 selectedNarrativeUuid: null,
                 narrativeDetail: null,
                 editorState: {
@@ -124,7 +124,7 @@ class NewNarratives extends React.Component {
         const { editorState } = this.state;
         this.setState({
             selectedNarrativeUuid: narrativeUuid,
-            numberSubSection: 3,
+            numberSubSection: 1,
             loading: true
         });
         let keywords = [];
@@ -224,14 +224,17 @@ class NewNarratives extends React.Component {
                             index <= this.state.numberSubSection;
                             index += 1
                         ) {
-                            const section = {
-                                title: values[`sub-tittle-new-${index}`],
-                                datasource_id:
-                                    values[`datasourceID_new_${index}`],
-                                content: contents[index]
-                            };
-                            sections.push(section);
+                            if (values[`sub-tittle-new-${index}`]) {
+                                const section = {
+                                    title: values[`sub-tittle-new-${index}`],
+                                    datasource_id:
+                                        values[`datasourceID_new_${index}`],
+                                    content: contents[index]
+                                };
+                                sections.push(section);
+                            }
                         }
+                        console.log("sections", sections);
                         const hashtag = values.hashTags
                             .split("#")
                             .map(item => item.trim())
@@ -307,18 +310,24 @@ class NewNarratives extends React.Component {
                                 index
                             ].datasource_id = values[`datasourceID_${index}`];
                         }
-                        console.log(narrativeDetail.content_json.sections.length,this.state.numberSubSection)
+                        console.log(
+                            narrativeDetail.content_json.sections.length,
+                            this.state.numberSubSection
+                        );
                         for (
                             let index =
                                 narrativeDetail.content_json.sections.length;
                             index <= this.state.numberSubSection;
                             index += 1
                         ) {
-                            narrativeDetail.content_json.sections.push({
-                                title: values[`sub-tittle-new-${index}`],
-                                datasource_id: values[`datasourceID_new_${index}`],
-                                content: contents[index]
-                            });
+                            if (values[`sub-tittle-new-${index}`]) {
+                                narrativeDetail.content_json.sections.push({
+                                    title: values[`sub-tittle-new-${index}`],
+                                    datasource_id:
+                                        values[`datasourceID_new_${index}`],
+                                    content: contents[index]
+                                });
+                            }
                         }
                         updateNarrative(
                             selectedNarrativeUuid, // narrative_id
@@ -359,7 +368,7 @@ class NewNarratives extends React.Component {
         this.setState({
             narrativeDetail: null,
             selectedNarrativeUuid: null,
-            numberSubSection: 3,
+            numberSubSection: 1,
             editorState: {
                 section0: createEditorState(),
                 section1: createEditorState(),
@@ -373,12 +382,53 @@ class NewNarratives extends React.Component {
     };
 
     addSection = () => {
-        const { editorState, numberSubSection } = this.state;
-        editorState[`section${numberSubSection + 1}`] = createEditorState();
-        this.setState(prevState => ({
-            numberSubSection: prevState.numberSubSection + 1,
-            editorState
-        }));
+        const {
+            editorState,
+            numberSubSection,
+            contents,
+            selectedAlbum
+        } = this.state;
+        this.props.form.validateFields((err, values) => {
+            if (!err) {
+                // console.log(
+                //     "Received values of form: ",
+                //     values,
+                //     numberSubSection
+                // );
+                if (selectedAlbum) {
+                    if (
+                        values[`sub-tittle-${numberSubSection}`]||values[`sub-tittle-new-${numberSubSection}`]
+                    ) {
+                        editorState[
+                            `section${numberSubSection + 1}`
+                        ] = createEditorState();
+                        this.setState(prevState => ({
+                            numberSubSection: prevState.numberSubSection + 1,
+                            editorState
+                        }));
+                    } else {
+                        alert("please input section!");
+                    }
+                } else {
+                    if (
+                        values[`sub-tittle-new-${numberSubSection}`] &&
+                        contents[numberSubSection]
+                    ) {
+                        editorState[
+                            `section${numberSubSection + 1}`
+                        ] = createEditorState();
+                        this.setState(prevState => ({
+                            numberSubSection: prevState.numberSubSection + 1,
+                            editorState
+                        }));
+                    } else {
+                        alert("please input section!");
+                    }
+                }
+            } else {
+                alert("error!");
+            }
+        });
     };
 
     handleFindDataSource = (fieldLink, fieldDatasource) => () => {
