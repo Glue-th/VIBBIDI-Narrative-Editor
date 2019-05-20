@@ -76,7 +76,7 @@ export default class LoginPage extends Component {
                         // onFocus={() => dispatch({ type: 'login/resetMsg', payload: null })}
                     />
                     {/* {msgLogin && this.renderErrorMsg(msgLogin)} */}
-                    {/* <Submit loading={submitting}>
+                    {/* <Submit>
                         <strong>LOG IN</strong>
                     </Submit> */}
                 </Login>

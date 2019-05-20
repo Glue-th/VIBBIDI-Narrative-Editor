@@ -58,7 +58,7 @@ class NarrativesDetailsTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_album_name_${template.UUID}` },
+                    props: { id: `tbl_title_${template.UUID}` },
                     children: template.title,
                 }),
             },
@@ -68,7 +68,7 @@ class NarrativesDetailsTable extends React.Component {
                 key: guid(),
                 align: 'center',
                 render: (text, template) => ({
-                    props: { id: `tbl_album_name_${template.UUID}` },
+                    props: { id: `tbl_owner_${template.UUID}` },
                     children: template.username,
                 }),
             },
@@ -80,9 +80,8 @@ class NarrativesDetailsTable extends React.Component {
                     columns={columns}
                     dataSource={this.props.narratives.map(narrative => ({
                         UUID: narrative.id,
-                        album_name: narrative.album_title,
                         title: narrative.title,
-                        username: narrative.owner.username,
+                        username: (narrative.author && narrative.author.username) || '',
                     }))}
                     bordered
                     size="small"

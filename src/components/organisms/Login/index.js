@@ -1,11 +1,10 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
 import { Form, Tabs } from 'antd';
 import { connect } from 'dva';
-import classNames from 'classnames';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
 import LoginItem from './LoginItem';
-import LoginTab from './LoginTab';
 import LoginSubmit from './LoginSubmit';
+import LoginTab from './LoginTab';
 
 @connect(({ global, user }) => ({ global, user }))
 class Login extends Component {

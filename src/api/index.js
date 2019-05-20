@@ -2,8 +2,8 @@
 /* eslint-disable comma-dangle */
 import axios from 'axios';
 
-const API_HOST = 'https://api.vibbidi.net';
-const GQL_HOST = 'https://api.vibbidi.net/api/v6/graphql';
+const API_HOST = 'https://st-api.vibbidi.net/';
+const GQL_HOST = 'https://st-api.vibbidi.net/api/v6/graphql';
 
 const axiosConfig = {
     headers: {
@@ -22,10 +22,43 @@ export function searchAlbums(albumTitle, artistName) {
     });
 }
 
+// export function getAlbumNarratives(albumUuid) {
+//     return axios.get(`${API_HOST}/api/v6/narratives/album/${albumUuid}`);
+// }
 export function getAlbumNarratives(albumUuid) {
-    return axios.get(`${API_HOST}/api/v6/narratives/album/${albumUuid}`);
+    const query = `
+    query AlbumNarratives($albumId: String!, $startPoint: Int, $itemsToGet: Int) {
+        album(albumId: $albumId) {
+          userNarratives(startPoint: $startPoint, itemsToGet: $itemsToGet) {
+                id
+                title
+                author {
+                id
+                username
+                webUri
+                fullName
+                profilePictureUrl
+                }
+            }
+        }
+    }`;
+    return axios.post(
+        GQL_HOST,
+        {
+            query: query,
+            variables: {
+                albumId: albumUuid,
+                startPoint: 0,
+                itemsToGet: 100,
+            },
+        },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        },
+    );
 }
-
 export function getNarrativeDetail(narrativeUuid) {
     return axios.get(`${API_HOST}/api/v6/narratives/${narrativeUuid}`);
 }
@@ -40,13 +73,7 @@ export function createNarrative(albumId, userId, title, contentJson) {
 }
 
 /** overide all fields. Carefully */
-export function updateNarrative(
-    narrativeId,
-    albumId,
-    userId,
-    title,
-    contentJson
-) {
+export function updateNarrative(narrativeId, albumId, userId, title, contentJson) {
     return axios.post(`${API_HOST}/api/v6/narratives`, {
         narrative_id: narrativeId,
         album_id: albumId,

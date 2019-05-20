@@ -6,7 +6,7 @@
 /* eslint-disable implicit-arrow-linebreak */
 /* eslint-disable react/jsx-wrap-multilines */
 import {
-    Button, Card, Col, Form, Input, Row, Spin
+    Button, Card, Col, Form, Input, Modal, Row, Spin
 } from 'antd';
 import { convertFromRaw, convertToRaw, EditorState } from 'draft-js';
 // import { draftjsToMd, mdToDraftjs } from 'draftjs-md-converter';
@@ -27,6 +27,7 @@ import {
 import { getUrlAndAchor, getVideoLink } from '../../organisms/medium-draft/exporter';
 import AlbumSearch from '../../organisms/SearchAlbum/index';
 import EditorNarratives from './Editor';
+import NarrativePopup from './NarrativePopup';
 import AlbumsDetailTable from './Table/albums-details-table';
 import KeywordTable from './Table/keyword-table';
 import NarrativesDetailTable from './Table/narratives-details-table';
@@ -51,6 +52,7 @@ class NewNarratives extends React.Component {
             keywords: [],
             videoDatas: [],
             loading: false,
+            openPreview: false,
         };
 
         this.onChange = editorState => {
@@ -78,13 +80,26 @@ class NewNarratives extends React.Component {
         this.setState({ keywords, videoDatas });
     }, 1000);
 
+    showModal = () => {
+        this.setState({
+            openPreview: true,
+        });
+    };
+
+    handleOk = e => {
+        console.log(e);
+        this.setState({
+            openPreview: false,
+        });
+    };
+
     onAlbumClicked = album => {
         this.handleCancel();
         this.setState({ selectedAlbum: album, narratives: [], loading: true });
         getAlbumNarratives(album.id)
-            .then(res => res.data.narratives)
-            .then(narratives => {
-                this.setState({ narratives, loading: false });
+            .then(res => res.data.data.album.userNarratives)
+            .then(userNarratives => {
+                this.setState({ narratives: userNarratives, loading: false });
             })
             .catch(e => {
                 console.log(e.message);
@@ -137,37 +152,42 @@ class NewNarratives extends React.Component {
             if (!err) {
                 if (selectedAlbum) {
                     this.setState({ loading: true });
-                    console.log('Received values of form: ', values);
-                    const rawContentState = convertToRaw(editorState.getCurrentContent());
-                    // const markup = draftjsToMd(rawContentState);
-                    const hashtag = values.hashTags
-                        .split('#')
-                        .map(item => item.trim())
-                        .slice(1);
-                    // console.log(sections);
-                    createNarrative(
-                        selectedAlbum.id, // album_id
-                        values.author, // user_id
-                        values.main_title, // title
-                        rawContentState, // content_json
-                    )
-                        .then(res => res.data.narrative.id)
-                        .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
-                        .then(() => {
-                            this.setState({ loading: false });
-                            this.handleCancel();
-                            getAlbumNarratives(selectedAlbum.id)
-                                .then(res => res.data.narratives)
-                                .then(narratives => {
-                                    this.setState({ narratives });
-                                })
-                                .catch(e => console.log(e.message));
-                            alert('create narrative success');
-                        })
-                        .catch(err => {
-                            console.log('update fail', err.message);
-                            this.setState({ loading: false });
-                        });
+                    try {
+                        console.log('Received values of form: ', values);
+                        const rawContentState = convertToRaw(editorState.getCurrentContent());
+                        // const markup = draftjsToMd(rawContentState);
+                        const hashtag = values.hashTags
+                            .split('#')
+                            .map(item => item.trim())
+                            .slice(1);
+                        // console.log(sections);
+                        createNarrative(
+                            selectedAlbum.id, // album_id
+                            values.author, // user_id
+                            values.main_title, // title
+                            rawContentState, // content_json
+                        )
+                            .then(res => res.data.narrative.id)
+                            .then(narrativeId => setNarrativeTags(narrativeId, hashtag))
+                            .then(() => {
+                                this.setState({ loading: false });
+                                this.handleCancel();
+                                getAlbumNarratives(selectedAlbum.id)
+                                    .then(res => res.data.narratives)
+                                    .then(narratives => {
+                                        this.setState({ narratives });
+                                    })
+                                    .catch(e => console.log(e.message));
+                                alert('create narrative success');
+                            })
+                            .catch(error => {
+                                alert(`create narrative fail ${error.message}`);
+                                this.setState({ loading: false });
+                            });
+                    } catch (e1) {
+                        alert(`create narrative fail ${e1.message}`);
+                        this.setState({ loading: false });
+                    }
                 }
                 this.setState({ loading: false });
             }
@@ -183,38 +203,44 @@ class NewNarratives extends React.Component {
         this.props.form.validateFields((err, values) => {
             if (!err) {
                 this.setState({ loading: true });
-                console.log('Received values of form: ', values);
-                const hashtag = values.hashTags
-                    .split('#')
-                    .map(item => item.trim())
-                    .slice(1);
+                try {
+                    console.log('Received values of form: ', values);
+                    const hashtag = values.hashTags
+                        .split('#')
+                        .map(item => item.trim())
+                        .slice(1);
 
-                if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
-                    const rawContentState = convertToRaw(editorState.getCurrentContent());
-                    updateNarrative(
-                        selectedNarrativeUuid, // narrative_id
-                        selectedAlbum.id, // album_id
-                        values.author, // user_id
-                        values.main_title, // title
-                        rawContentState, // content_json
-                    )
-                        .then(() => setNarrativeTags(selectedNarrativeUuid, hashtag))
-                        .then(() => {
-                            this.setState({ loading: false });
-                            this.handleCancel();
-                            getAlbumNarratives(selectedAlbum.id)
-                                .then(res => res.data.narratives)
-                                .then(narratives => {
-                                    this.setState({ narratives });
-                                })
-                                .catch(e => console.log(e.message));
-                            alert('update narrative success');
-                        })
-                        .catch(err => {
-                            console.log('update fail', err.message);
-                            this.setState({ loading: false });
-                        });
+                    if (selectedNarrativeUuid && narrativeDetail && narrativeDetail.content_json) {
+                        const rawContentState = convertToRaw(editorState.getCurrentContent());
+                        updateNarrative(
+                            selectedNarrativeUuid, // narrative_id
+                            selectedAlbum.id, // album_id
+                            values.author, // user_id
+                            values.main_title, // title
+                            rawContentState, // content_json
+                        )
+                            .then(() => setNarrativeTags(selectedNarrativeUuid, hashtag))
+                            .then(() => {
+                                this.setState({ loading: false });
+                                this.handleCancel();
+                                getAlbumNarratives(selectedAlbum.id)
+                                    .then(res => res.data.narratives)
+                                    .then(narratives => {
+                                        this.setState({ narratives });
+                                    })
+                                    .catch(e => console.log(e.message));
+                                alert('update narrative success');
+                            })
+                            .catch(error => {
+                                console.log('update fail', error.message);
+                                this.setState({ loading: false });
+                            });
+                    }
+                } catch (e1) {
+                    alert(`update fail${e1.message}`);
+                    this.setState({ loading: false });
                 }
+
                 this.setState({ loading: false });
             }
         });
@@ -409,6 +435,9 @@ class NewNarratives extends React.Component {
                                     <Button id="btnCancel" onClick={this.handleCancel}>
                                         Cancel
                                     </Button>
+                                    <Button id="btnPreview" type="primary" onClick={this.showModal}>
+                                        Preview
+                                    </Button>
                                     {narrativeDetail && (
                                         <Button
                                             type="danger"
@@ -428,6 +457,29 @@ class NewNarratives extends React.Component {
                         </Form>
                     )}
                 </div>
+                <Modal
+                    title="Preview Mode"
+                    visible={this.state.openPreview}
+                    onOk={this.handleOk}
+                    onCancel={this.handleOk}
+                    footer={[
+                        <Button key="back" onClick={this.handleOk}>
+                            Return
+                        </Button>,
+                    ]}
+                    width="50%"
+                    // style={{ width: '50%' }}
+                >
+                    <NarrativePopup
+                        tags={this.state.hashTag
+                            .split('#')
+                            .map(item => item.trim())
+                            .slice(1)}
+                        title={this.props.form.getFieldValue('main_title')}
+                        editorState={this.state.editorState}
+                        onChange={this.onChange}
+                    />
+                </Modal>
             </Container>
         );
     }
@@ -460,6 +512,7 @@ const Container = styled.div`
         .label {
             float: right;
         }
+        #btnPreview,
         #btnSubmit,
         #btnCancel,
         #btnSave {
@@ -481,7 +534,6 @@ const Title = styled.div`
         color: #00688d;
     }
 `;
-
 const SubTitle = styled.div`
     font-weight: 200;
     font-size: 1.5rem;

@@ -1,4 +1,4 @@
-import { Breadcrumb, Layout } from 'antd';
+import { Layout } from 'antd';
 import { enquireScreen } from 'enquire-js';
 import React from 'react';
 import { HashRouter, Route, Switch } from 'react-router-dom';
@@ -8,8 +8,8 @@ import GlobalHeader from './components/organisms/GlobalHeader';
 import SiderMenu from './components/organisms/SiderMenu';
 import DashBoard from './components/templates/DashBoard';
 import Login from './components/templates/Login';
-import NewNarrativesContainer from './containers/album/new-narratives';
 import AlbumNarrativesContainer from './containers/album/album-narratives';
+import NewNarrativesContainer from './containers/album/new-narratives';
 import SeoContainer from './containers/album/seo';
 import MenuData from './menu';
 import { GlobalStyle } from './styles/global.style';
@@ -71,7 +71,7 @@ class BasicLayout extends React.Component {
                                     >
                                         <Switch>
                                             <Route path="/" exact component={DashBoard} />
-                                            {/* <Route path="/login" exact component={Login} /> */}
+                                            <Route path="/login" exact component={Login} />
                                             <Route
                                                 path="/album-narratives"
                                                 exact

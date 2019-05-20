@@ -99,7 +99,7 @@ class EditorNarratives extends React.Component {
     }
 
     render() {
-        const { editorState, onChange } = this.props;
+        const { editorState, onChange, editorEnabled } = this.props;
         return (
             <Container>
                 <Editor
@@ -108,6 +108,7 @@ class EditorNarratives extends React.Component {
                     onChange={onChange}
                     sideButtons={this.sideButtons}
                     rendererFn={this.rendererFn}
+                    editorEnabled={editorEnabled}
                     inlineButtons={this.inlineButtons}
                     blockButtons={this.blockButtons}
                     customStyleMap={customStyleMap}
