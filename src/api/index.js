@@ -2,8 +2,8 @@
 /* eslint-disable comma-dangle */
 import axios from 'axios';
 
-const API_HOST = 'https://st-api.vibbidi.net';
-const GQL_HOST = 'https://st-api.vibbidi.net/api/v6/graphql';
+const API_HOST = 'https://api.vibbidi.net';
+const GQL_HOST = 'https://api.vibbidi.net/api/v6/graphql';
 
 export function searchAlbums(albumTitle, artistName) {
     return axios.get(`${API_HOST}/api/v6/narratives`, {
